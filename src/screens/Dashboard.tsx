@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { useAuth } from '../contexts/AuthContext';
+import BrandGlyph from '../components/BrandGlyph';
 
 const categories = [
   { id: 'notes', name: 'Notes', icon: 'book-open-page-variant', color: '#3b82f6' },
@@ -24,6 +26,8 @@ const categories = [
 
 export default function Dashboard() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -36,24 +40,40 @@ export default function Dashboard() {
     navigation.navigate('PaperBrowser', { category: category.id });
   };
 
+  const handleLogout = async () => {
+    await logout();
+    setMenuOpen(false);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.menuButton}>
+        <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(!menuOpen)}>
           <Icon name="menu" size={24} color={theme.colors.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Learner Dashboard</Text>
+        <View style={styles.headerTitleWrap}>
+          <BrandGlyph size={20} primaryColor={theme.colors.primary} secondaryColor={theme.colors.accent} />
+          <Text style={styles.headerTitle}>SMTH011</Text>
+        </View>
         <TouchableOpacity style={styles.favoriteButton}>
           <Icon name="heart-outline" size={24} color={theme.colors.primary} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <LinearGradient colors={[theme.colors.primary, '#3b82f6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.welcomeBanner}>
-          <Text style={styles.welcomeText}>
-            {getGreeting()} • {theme.brandName} • SMTH011 Introduction to Calculus
-          </Text>
-        </LinearGradient>
+      {menuOpen && (
+        <>
+          <TouchableOpacity style={styles.menuOverlay} activeOpacity={1} onPress={() => setMenuOpen(false)} />
+          <View style={styles.menuDropdown}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+              <Icon name={"logout" as keyof typeof Icon.glyphMap} size={20} color={theme.colors.primary} />
+              <Text style={styles.menuItemText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+
+      <ScrollView contentContainerStyle={styles.scrollContent} pointerEvents={menuOpen ? 'none' : 'auto'}>
+
 
         <View style={styles.categoriesGrid}>
           {categories.map((category) => {
@@ -93,6 +113,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: theme.colors.primary },
+  headerTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   favoriteButton: {
     padding: 8,
   },
@@ -110,4 +131,8 @@ const styles = StyleSheet.create({
   categoryCard: { width: '48%', backgroundColor: theme.colors.card, borderRadius: 12, paddingVertical: 16, paddingHorizontal: 12, marginBottom: 16, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border },
   iconContainer: { width: 64, height: 64, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   categoryName: { fontSize: 15, fontWeight: '600', color: theme.colors.primary, textAlign: 'center' },
+  menuOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000 },
+  menuDropdown: { position: 'absolute', top: 64, left: 16, backgroundColor: theme.colors.card, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border, paddingVertical: 8, width: 180, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 10, zIndex: 1001 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10 },
+  menuItemText: { fontSize: 15, color: theme.colors.text, fontWeight: '600' },
 });

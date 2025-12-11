@@ -13,6 +13,7 @@ import Progress from '../screens/Progress';
 import Login from '../screens/auth/Login';
 import Register from '../screens/auth/Register';
 import { useAuth as useClerkAuth } from '@clerk/clerk-expo';
+import StartupSplash from '../screens/StartupSplash';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -20,6 +21,7 @@ export type RootStackParamList = {
   Main: undefined;
   PaperBrowser: { category: string };
   QuestionViewer: { paperId: string } | undefined;
+  StartupSplash: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -65,12 +67,16 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
-  const { isSignedIn } = useClerkAuth();
+  const { isSignedIn, isLoaded } = useClerkAuth();
 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!isSignedIn ? (
+        {!isLoaded ? (
+          <>
+            <Stack.Screen name="StartupSplash" component={StartupSplash} />
+          </>
+        ) : !isSignedIn ? (
           <>
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Register" component={Register} />
