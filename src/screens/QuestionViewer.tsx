@@ -9,28 +9,29 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { theme } from '../theme';
 
 const sampleQuestions = [
   {
     id: '1',
-    number: '1.1.1',
-    content: 'x² − 7x + 10 = 0',
-    marks: 2,
-    answer: 'Using the quadratic formula:\n\nx = (7 ± √(49 - 40)) / 2\nx = (7 ± √9) / 2\nx = (7 ± 3) / 2\n\nTherefore: x = 5 or x = 2',
+    number: 'Q1',
+    content: 'Compute d/dx [x^3 sin(x)]',
+    marks: 5,
+    answer: "Use product rule: (x^3)' sin x + x^3 (sin x)' = 3x^2 sin x + x^3 cos x",
   },
   {
     id: '2',
-    number: '1.1.2',
-    content: '3x² + 2x + 6 = 10 (correct to two decimal places)',
-    marks: 4,
-    answer: 'Rearranging: 3x² + 2x - 4 = 0\n\nUsing quadratic formula:\nx = (-2 ± √(4 + 48)) / 6\nx = (-2 ± √52) / 6\nx = (-2 ± 7.21) / 6\n\nx = 0.87 or x = -1.54 (to 2 decimal places)',
+    number: 'Q2',
+    content: 'Evaluate limit as x→0 of (sin x)/x',
+    marks: 3,
+    answer: 'Standard limit: lim_{x→0} (sin x)/x = 1',
   },
   {
     id: '3',
-    number: '1.1.3',
-    content: 'x³ + 3x² − 28 = 0',
-    marks: 4,
-    answer: 'By inspection, x = 2 is a root.\n\nUsing polynomial division or synthetic division:\n(x - 2)(x² + 5x + 14) = 0\n\nThe quadratic x² + 5x + 14 has discriminant = 25 - 56 = -31 < 0\n\nTherefore, the only real solution is x = 2',
+    number: 'Q3',
+    content: 'Find the derivative of f(x)=e^{2x}',
+    marks: 3,
+    answer: "f'(x)=2e^{2x}",
   },
 ];
 
@@ -69,7 +70,7 @@ export default function QuestionViewer() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="chevron-left" size={24} color="#1e3a8a" />
+          <Icon name="chevron-left" size={24} color={theme.colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>QUESTION 1</Text>
         <View style={styles.headerIcons}>
@@ -86,8 +87,9 @@ export default function QuestionViewer() {
         {sampleQuestions.map((question) => (
           <View key={question.id} style={styles.questionCard}>
             <View style={styles.questionHeader}>
+              <View style={styles.headerAccent} />
               <Text style={styles.questionNumber}>{question.number}</Text>
-              <Text style={styles.marks}>({question.marks})</Text>
+              <Text style={styles.marksBadge}>{question.marks}</Text>
             </View>
             
             <View style={styles.questionContent}>
@@ -96,31 +98,23 @@ export default function QuestionViewer() {
 
             <View style={styles.actionButtons}>
               <TouchableOpacity
-                style={styles.actionButton}
+                style={[styles.pillButton, showAnswers[question.id] && styles.pillButtonActive]}
                 onPress={() => toggleAnswer(question.id)}
               >
                 <Text style={styles.actionButtonText}>
                   {showAnswers[question.id] ? 'Hide Answers' : 'View Answers'}
                 </Text>
-                {showAnswers[question.id] ? (
-                  <Icon name="chevron-up" size={16} color="#1e3a8a" />
-                ) : (
-                  <Icon name="chevron-down" size={16} color="#1e3a8a" />
-                )}
+                <Icon name={showAnswers[question.id] ? 'chevron-up' : 'chevron-down'} size={16} color={theme.colors.primary} />
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.actionButton}
+                style={[styles.pillButton, showVideo[question.id] && styles.pillButtonActive]}
                 onPress={() => toggleVideo(question.id)}
               >
                 <Text style={styles.actionButtonText}>
                   {showVideo[question.id] ? 'Hide Video' : 'Video Solutions'}
                 </Text>
-                {showVideo[question.id] ? (
-                  <Icon name="chevron-up" size={16} color="#1e3a8a" />
-                ) : (
-                  <Icon name="chevron-down" size={16} color="#1e3a8a" />
-                )}
+                <Icon name={showVideo[question.id] ? 'chevron-up' : 'chevron-down'} size={16} color={theme.colors.primary} />
               </TouchableOpacity>
             </View>
 
@@ -144,19 +138,16 @@ export default function QuestionViewer() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
+  container: { flex: 1, backgroundColor: theme.colors.bg },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: theme.colors.border,
   },
   backButton: {
     padding: 8,
@@ -164,7 +155,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: theme.colors.primary,
   },
   headerIcons: {
     flexDirection: 'row',
@@ -177,7 +168,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   questionCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
@@ -189,58 +180,48 @@ const styles = StyleSheet.create({
   },
   questionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    gap: 12,
+    marginBottom: 12,
   },
+  headerAccent: { width: 4, height: 20, backgroundColor: theme.colors.primary, borderRadius: 4 },
   questionNumber: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: theme.colors.primary,
   },
-  marks: {
-    fontSize: 16,
-    color: '#9ca3af',
-  },
+  marksBadge: { marginLeft: 'auto', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: theme.colors.secondaryBg, color: theme.colors.primary, fontWeight: '700' },
   questionContent: {
     marginBottom: 20,
   },
   questionText: {
     fontSize: 16,
-    color: '#374151',
+    color: theme.colors.text,
     lineHeight: 24,
   },
-  actionButtons: {
-    gap: 12,
-  },
-  actionButton: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+  actionButtons: { gap: 10, flexDirection: 'row' },
+  pillButton: { backgroundColor: theme.colors.secondaryBg, borderRadius: 999, paddingVertical: 10, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
+  pillButtonActive: { backgroundColor: '#e2e8f0' },
   actionButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1e3a8a',
+    color: theme.colors.primary,
   },
   answerSection: {
     marginTop: 16,
     padding: 16,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.bg,
     borderRadius: 8,
   },
   answerTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: theme.colors.primary,
     marginBottom: 8,
   },
   answerText: {
     fontSize: 14,
-    color: '#374151',
+    color: theme.colors.text,
     lineHeight: 20,
   },
   videoSection: {
@@ -252,6 +233,6 @@ const styles = StyleSheet.create({
   },
   videoText: {
     fontSize: 14,
-    color: '#6366f1',
+    color: theme.colors.accent,
   },
 });

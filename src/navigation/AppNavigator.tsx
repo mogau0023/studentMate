@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { theme } from '../theme';
 
 import Dashboard from '../screens/Dashboard';
 import PaperBrowser from '../screens/PaperBrowser';
@@ -11,9 +12,17 @@ import Favorites from '../screens/Favorites';
 import Progress from '../screens/Progress';
 import Login from '../screens/auth/Login';
 import Register from '../screens/auth/Register';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth as useClerkAuth } from '@clerk/clerk-expo';
 
-const Stack = createStackNavigator();
+export type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  Main: undefined;
+  PaperBrowser: { category: string };
+  QuestionViewer: { paperId: string } | undefined;
+};
+
+const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
@@ -21,12 +30,12 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#1e3a8a',
-        tabBarInactiveTintColor: '#6b7280',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.muted,
         tabBarStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: theme.colors.card,
           borderTopWidth: 1,
-          borderTopColor: '#e5e7eb',
+          borderTopColor: theme.colors.border,
         },
       }}
     >
@@ -56,12 +65,12 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
-  const { user } = useAuth();
+  const { isSignedIn } = useClerkAuth();
 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!user ? (
+        {!isSignedIn ? (
           <>
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Register" component={Register} />

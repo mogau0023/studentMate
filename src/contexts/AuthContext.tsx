@@ -1,19 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  User
-} from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+import React, { createContext, useContext } from 'react';
+import { useAuth as useClerkAuth, useUser, useSignIn, useClerk } from '@clerk/clerk-expo';
 
 interface AuthContextType {
-  user: User | null;
+  user: any;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -28,64 +19,32 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
+  const { isSignedIn, signOut } = useClerkAuth();
+  const { setActive } = useClerk();
+  const { user, isLoaded } = useUser();
+  const { signIn } = useSignIn();
 
   const login = async (email: string, password: string) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const register = async (email: string, password: string, name: string) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Create user document in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        name: name,
-        plan_type: 'free',
-        created_at: new Date(),
-        last_active: new Date()
-      });
-    } catch (error) {
-      throw error;
+    const res = await signIn?.create({ identifier: email, password });
+    if (res?.createdSessionId) {
+      await setActive({ session: res.createdSessionId });
     }
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      throw error;
-    }
+    await signOut();
   };
 
   const value = {
-    user,
-    loading,
+    user: user ?? null,
+    loading: !isLoaded,
     login,
-    register,
-    logout
+    logout,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {!value.loading && children}
     </AuthContext.Provider>
   );
 };

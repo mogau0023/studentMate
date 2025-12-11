@@ -10,13 +10,22 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth as useClerkAuth, useSignIn, useClerk } from '@clerk/clerk-expo';
+import { theme } from '../../theme';
 
 export default function Login({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { isSignedIn } = useClerkAuth();
+  const { setActive } = useClerk();
+  const { signIn } = useSignIn();
+
+  React.useEffect(() => {
+    if (isSignedIn) {
+      navigation.replace('Main');
+    }
+  }, [isSignedIn]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -26,7 +35,11 @@ export default function Login({ navigation }: any) {
 
     setLoading(true);
     try {
-      await login(email, password);
+      const res = await signIn?.create({ identifier: email, password });
+      if (res?.createdSessionId) {
+        await setActive({ session: res.createdSessionId });
+        navigation.replace('Main');
+      }
     } catch (error: any) {
       Alert.alert('Login Error', error.message);
     } finally {
@@ -41,7 +54,7 @@ export default function Login({ navigation }: any) {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <Text style={styles.title}>Math Study App</Text>
+          <Text style={styles.title}>{theme.brandName}</Text>
           <Text style={styles.subtitle}>Login to continue your learning journey</Text>
         </View>
 
@@ -94,10 +107,7 @@ export default function Login({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
+  container: { flex: 1, backgroundColor: theme.colors.card },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -107,44 +117,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1e3a8a',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
+  title: { fontSize: 32, fontWeight: 'bold', color: theme.colors.primary, marginBottom: 8 },
+  subtitle: { fontSize: 16, color: theme.colors.muted, textAlign: 'center' },
   form: {
     width: '100%',
   },
   inputContainer: {
     marginBottom: 20,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#f9fafb',
-  },
-  button: {
-    backgroundColor: '#1e3a8a',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
+  label: { fontSize: 16, fontWeight: '600', color: theme.colors.text, marginBottom: 8 },
+  input: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: theme.colors.bg },
+  button: { backgroundColor: theme.colors.primary, borderRadius: 8, padding: 16, alignItems: 'center', marginTop: 8 },
   buttonDisabled: {
     backgroundColor: '#9ca3af',
   },
@@ -157,9 +140,5 @@ const styles = StyleSheet.create({
     marginTop: 16,
     alignItems: 'center',
   },
-  linkText: {
-    color: '#1e3a8a',
-    fontSize: 14,
-    textDecorationLine: 'underline',
-  },
+  linkText: { color: theme.colors.primary, fontSize: 14, textDecorationLine: 'underline' },
 });
