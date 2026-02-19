@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "studentMate",
-    "slug": "studentMate",
+    "name": "StudentMate",
+    "slug": "StudentMate",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,8 +20,17 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.studentMate"
     },
+    "plugins": [
+      [
+        "react-native-google-mobile-ads",
+        {
+          "android_app_id": "ca-app-pub-1672761036207739~9982689691"
+        }
+      ]
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     }
