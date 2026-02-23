@@ -31,7 +31,6 @@ export default function ProfileScreen({ navigation }) {
           name: data?.name || user.displayName || '',
           universityId: data?.universityId || '',
           universityName: data?.universityName || data?.university || '',
-          points: data?.points || 0,
           subscriptionActive: !!data?.subscriptionActive,
         });
       }
@@ -87,10 +86,6 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{profile?.points || 0}</Text>
-            <Text style={styles.statLabel}>Points</Text>
-          </View>
           <View style={[styles.statCard, { backgroundColor: '#e0f2fe' }]}>
             <Text style={[styles.statValue, { color: '#0284c7' }]}>
               {profile?.subscriptionActive ? 'PRO' : 'FREE'}
@@ -101,7 +96,7 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Upgrade Banner */}
         {!profile?.subscriptionActive && (
-          <TouchableOpacity style={styles.upgradeBanner} onPress={() => console.log('Go to subscription')}>
+          <TouchableOpacity style={styles.upgradeBanner} onPress={() => navigation.navigate("Paywall")}>
             <View>
               <Text style={styles.upgradeTitle}>Upgrade to Premium</Text>
               <Text style={styles.upgradeSub}>Get unlimited access to memos & videos</Text>
@@ -123,14 +118,7 @@ export default function ProfileScreen({ navigation }) {
             <Feather name="chevron-right" size={20} color="#ccc" />
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.menuItem} 
-            onPress={() => navigation.navigate('PointsHistory')}
-          >
-            <Feather name="clock" size={20} color="#666" />
-            <Text style={styles.menuText}>Points History</Text>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
+
 
           <TouchableOpacity style={styles.menuItem} onPress={() => console.log('Notifications')}>
             <Feather name="bell" size={20} color="#666" />

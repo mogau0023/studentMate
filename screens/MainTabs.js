@@ -6,6 +6,7 @@ import HomeStack from './HomeStack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import { bannerUnitId, adsEnabled } from '../utils/ads';
+import { useSubscription } from "../providers/SubscriptionProvider";
 
 function Placeholder() {
   return (
@@ -21,34 +22,34 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ProfileScreen from './ProfileScreen';
 import UploadScreen from './UploadScreen';
 import EditProfileScreen from './EditProfileScreen';
-import PointsHistoryScreen from './PointsHistoryScreen';
 
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
-
 function ProfileStackScreen() {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
       <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
-      <ProfileStack.Screen name="PointsHistory" component={PointsHistoryScreen} />
     </ProfileStack.Navigator>
   );
 }
 
 function TabBarWithBanner(props) {
+  const { isPro } = useSubscription();
   const insets = useSafeAreaInsets();
   const BANNER_UNIT_ID = bannerUnitId();
   return (
     <View>
       {adsEnabled() ? (
         <View style={{ alignItems: 'center', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
+          {!isPro ? (
           <BannerAd
             unitId={BANNER_UNIT_ID}
             size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
             onAdLoaded={() => console.log('Global banner loaded')}
             onAdFailedToLoad={(e) => console.log('Global banner failed', e)}
           />
+          ) : null}
         </View>
       ) : null}
       <BottomTabBar {...props} />

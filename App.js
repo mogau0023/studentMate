@@ -600,6 +600,7 @@ function ForgotPasswordScreen({ navigation }) {
 }
 
 import { LogBox } from 'react-native';
+import PaywallScreen from './screens/PaywallScreen';
 
 // Ignore specific warnings
 LogBox.ignoreLogs([
@@ -621,6 +622,8 @@ export default function App() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="MainTabs" component={MainTabs} />
+        <Stack.Screen name="Paywall" component={PaywallScreen} />
+        
       </Stack.Navigator>
     </NavigationContainer>
   );

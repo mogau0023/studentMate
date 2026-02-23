@@ -37,7 +37,11 @@
       "androidBannerUnitId": "ca-app-pub-1672761036207739/2104199677",
       "androidRewardedUnitId": "ca-app-pub-1672761036207739/7074714507",
       "iosBannerUnitId": "",
-      "iosRewardedUnitId": ""
+      "iosRewardedUnitId": "",
+
+      "revenueCatGoogleApiKey": "test_hNUhcRFoWOmjLOdBqFuPsXnDhvr",
+      "revenueCatAppleApiKey": "test_hNUhcRFoWOmjLOdBqFuPsXnDhvr",
+      "revenueCatEntitlementId": "StudentMate Pro"
     },
     "owner": "mogaumphekgwanas-organization"
   }

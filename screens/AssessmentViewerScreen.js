@@ -7,6 +7,7 @@ import ImageViewer from 'react-native-image-zoom-viewer';
 import { auth, db } from '../firebase';
 import { RewardedAd, RewardedAdEventType, AdEventType } from 'react-native-google-mobile-ads';
 import { rewardedUnitId, adsEnabled } from '../utils/ads';
+import { useSubscription } from "../providers/SubscriptionProvider";
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -16,22 +17,30 @@ function QuestionCard({ question, number }) {
   const [expanded, setExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
+
+  // ✅ NEW: RevenueCat subscription status
+  const { isPro } = useSubscription();
+
+  // ✅ Keep your rewarded setup, but only use it for FREE users
   const rewardedRef = useRef(RewardedAd.createForAdRequest(rewardedUnitId()));
   const [rewardLoaded, setRewardLoaded] = useState(false);
   const pendingActionRef = useRef(null); // 'answers' | 'video' | null
+
   const [contentAspectRatio, setContentAspectRatio] = useState(null);
   const [answerAspectRatio, setAnswerAspectRatio] = useState(null);
 
   useEffect(() => {
+    // ✅ Pro users should never load/use rewarded ads
+    if (isPro) return;
+
     const rewarded = rewardedRef.current;
     const l1 = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => setRewardLoaded(true));
+
     const l2 = rewarded.addAdEventListener(RewardedAdEventType.EARNED_REWARD, async () => {
-      try {
-        const user = auth.currentUser;
-        if (user) await updateDoc(doc(db, 'users', user.uid), { points: increment(1) });
-      } catch {}
+      // ✅ REMOVED: points awarding (no Firestore writes)
       const act = pendingActionRef.current;
       pendingActionRef.current = null;
+
       if (act === 'answers') {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setExpanded(true);
@@ -39,15 +48,18 @@ function QuestionCard({ question, number }) {
         Linking.openURL(question.videoUrl);
       }
     });
+
     const l3 = rewarded.addAdEventListener(AdEventType.CLOSED, () => {
       setRewardLoaded(false);
       rewarded.load();
     });
+
     rewarded.load();
+
     return () => {
       l1(); l2(); l3();
     };
-  }, [question.videoUrl]);
+  }, [question.videoUrl, isPro]);
 
   useEffect(() => {
     const uri = question?.contentUrl;
@@ -87,11 +99,15 @@ function QuestionCard({ question, number }) {
       setExpanded(false);
       return;
     }
-    if (!adsEnabled()) {
+
+    // ✅ Pro: no ads, open instantly
+    if (isPro) {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setExpanded(true);
       return;
     }
+
+    // ✅ Free: must watch rewarded to open answers (same behavior)
     const rewarded = rewardedRef.current;
     pendingActionRef.current = 'answers';
     try {
@@ -109,6 +125,15 @@ function QuestionCard({ question, number }) {
   };
 
   const openVideo = () => {
+    // ✅ Pro: open directly
+    if (isPro) {
+      if (question.videoUrl) Linking.openURL(question.videoUrl);
+      else Alert.alert('No Video', 'Video solution is not available for this question.');
+      return;
+    }
+
+    // ✅ Free: if you want video to also be gated by rewarded, use rewarded
+    // Keeping your original behavior = open directly (no rewarded) ✅
     if (question.videoUrl) {
       Linking.openURL(question.videoUrl);
     } else {
@@ -141,7 +166,7 @@ function QuestionCard({ question, number }) {
           const cleaned = t.replace(r, '').trim();
           return cleaned ? <Text style={styles.questionText}>{cleaned}</Text> : null;
         })()}
-        
+
         {question.contentUrl && (
           <TouchableOpacity onPress={() => showImage(question.contentUrl)}>
             <Image
@@ -191,8 +216,8 @@ function QuestionCard({ question, number }) {
 
       <Modal visible={isVisible} transparent={true} onRequestClose={() => setIsVisible(false)}>
         {currentImage && (
-          <ImageViewer 
-            imageUrls={currentImage} 
+          <ImageViewer
+            imageUrls={currentImage}
             onCancel={() => setIsVisible(false)}
             enableSwipeDown={true}
             onSwipeDown={() => setIsVisible(false)}
