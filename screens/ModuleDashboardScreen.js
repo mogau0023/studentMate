@@ -26,7 +26,7 @@ export default function ModuleDashboardScreen({ navigation, route }) {
   const { moduleCode, moduleName, moduleId } = route.params || {};
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
           <Feather name="arrow-left" size={24} color="#0053A9" />
@@ -69,11 +69,6 @@ export default function ModuleDashboardScreen({ navigation, route }) {
           />
         </View>
       </ScrollView>
-
-      {/* Sticky Bottom Banner Ad */}
-      <View style={[styles.bannerContainer, { bottom: insets.bottom }]}>
-        <Text style={styles.bannerText}>Ad Banner Placeholder</Text>
-      </View>
     </SafeAreaView>
   );
 }
@@ -141,19 +136,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  bannerContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 60,
-    backgroundColor: '#f0f0f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  bannerText: {
-    color: '#888',
-    fontSize: 12,
-  },
+  
 });

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LogoHeader, Field, PrimaryButton, Wave, WAVE_HEIGHT } from '../components/UI';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { saveUserToCache } from '../utils/storage';
 
 export default function LoginScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -18,11 +20,22 @@ export default function LoginScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
-      // Navigation is handled by auth listener in SplashScreen or AppRoutes, 
-      // but since we don't have a global listener wrapping the navigator, 
-      // we manually navigate. However, if SplashScreen redirects to Login, 
-      // we should replace it. 
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const u = cred.user;
+      let profile = null;
+      try {
+        const snap = await getDoc(doc(db, 'users', u.uid));
+        profile = snap.exists() ? snap.data() : null;
+      } catch {}
+      await saveUserToCache({
+        uid: u.uid,
+        email: u.email,
+        name: profile?.name || u.displayName || '',
+        universityId: profile?.universityId || '',
+        universityName: profile?.universityName || profile?.university || '',
+        points: profile?.points || 0,
+        subscriptionActive: !!profile?.subscriptionActive,
+      });
       navigation.reset({
         index: 0,
         routes: [{ name: 'MainTabs' }],
@@ -35,7 +48,7 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: WAVE_HEIGHT + insets.bottom + 24 }]}>
         <LogoHeader title="Login" />
         <View style={styles.form}>
@@ -72,4 +85,3 @@ const styles = StyleSheet.create({
   secondaryText: { marginTop: 12, textAlign: 'center', color: '#555', fontSize: 14 },
   linkText: { color: '#0053A9', fontSize: 14, fontWeight: '600' },
 });
-

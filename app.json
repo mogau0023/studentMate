@@ -1,38 +1,44 @@
 {
   "expo": {
     "name": "StudentMate",
-    "slug": "StudentMate",
+    "slug": "studentmate",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "GADApplicationIdentifier": "ca-app-pub-1672761036207739~5569093544",
+        "GADDelayAppMeasurementInit": true
+      }
     },
     "android": {
+      "package": "com.anonymous.studentMate",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.studentMate"
+      "androidStatusBar": {
+        "barStyle": "dark-content",
+        "backgroundColor": "#ffffff",
+        "translucent": false
+      }
     },
-    "plugins": [
-      [
-        "react-native-google-mobile-ads",
-        {
-          "android_app_id": "ca-app-pub-1672761036207739~9982689691"
-        }
-      ]
-    ],
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4a7776d5-b0ba-4022-83e2-cf598ad460f0"
+      },
+      "androidBannerUnitId": "ca-app-pub-1672761036207739/2104199677",
+      "androidRewardedUnitId": "ca-app-pub-1672761036207739/7074714507",
+      "iosBannerUnitId": "",
+      "iosRewardedUnitId": ""
+    },
+    "owner": "mogaumphekgwanas-organization"
   }
 }

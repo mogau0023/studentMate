@@ -1,31 +1,56 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import { ModuleCard } from '../components/UI';
 import { auth, db } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { Feather } from '@expo/vector-icons';
+import { getCachedUser } from '../utils/storage';
 
 export default function ModulesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [myModules, setMyModules] = useState([]);
-  const user = auth.currentUser;
+  const [userId, setUserId] = useState(auth.currentUser?.uid || null);
+
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let unsubAuth;
+    // Fast path: try cached user first
+    (async () => {
+      if (!userId) {
+        const cached = await getCachedUser();
+        if (cached?.uid) setUserId(cached.uid);
+      }
+    })();
+    // Subscribe to auth state to catch late initialization
+    unsubAuth = onAuthStateChanged(auth, (u) => {
+      if (u?.uid) setUserId(u.uid);
+    });
+    return () => unsubAuth && unsubAuth();
+  }, []);
 
   useEffect(() => {
-    if (!user) return;
-    const q = query(collection(db, 'users', user.uid, 'modules'), orderBy('createdAt', 'desc'));
-    const unsub = onSnapshot(q, (snap) => {
-      const list = [];
-      snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
-      setMyModules(list);
-    });
+    setLoading(true);
+    if (!userId) return;
+    const q = query(collection(db, 'users', userId, 'modules'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list = [];
+        snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+        setMyModules(list);
+        setLoading(false);
+      },
+      () => setLoading(false)
+    );
     return unsub;
-  }, [user]);
+  }, [userId]);
 
   const deleteModule = async (moduleId) => {
-    if (!user) return;
-    await deleteDoc(doc(db, 'users', user.uid, 'modules', moduleId));
+    if (!userId) return;
+    await deleteDoc(doc(db, 'users', userId, 'modules', moduleId));
   };
 
   const openModule = (code, name, id) => {
@@ -52,7 +77,11 @@ export default function ModulesScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {myModules.length === 0 ? (
+        {loading ? (
+          <View style={styles.centerArea}>
+            <ActivityIndicator size="large" color="#0053A9" />
+          </View>
+        ) : myModules.length === 0 ? (
           <View style={styles.centerArea}>
             <View style={styles.emptyState}>
               <TouchableOpacity onPress={() => navigation.navigate('AddModules')} style={styles.bigAdd}>

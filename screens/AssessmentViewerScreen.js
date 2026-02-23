@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, LayoutAnimation, UIManager, Platform, Image, ActivityIndicator, Linking, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, updateDoc, doc, increment } from 'firebase/firestore';
 import ImageViewer from 'react-native-image-zoom-viewer';
-import { db } from '../firebase';
+import { auth, db } from '../firebase';
+import { RewardedAd, RewardedAdEventType, AdEventType } from 'react-native-google-mobile-ads';
+import { rewardedUnitId, adsEnabled } from '../utils/ads';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -14,10 +16,96 @@ function QuestionCard({ question, number }) {
   const [expanded, setExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
+  const rewardedRef = useRef(RewardedAd.createForAdRequest(rewardedUnitId()));
+  const [rewardLoaded, setRewardLoaded] = useState(false);
+  const pendingActionRef = useRef(null); // 'answers' | 'video' | null
+  const [contentAspectRatio, setContentAspectRatio] = useState(null);
+  const [answerAspectRatio, setAnswerAspectRatio] = useState(null);
+
+  useEffect(() => {
+    const rewarded = rewardedRef.current;
+    const l1 = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => setRewardLoaded(true));
+    const l2 = rewarded.addAdEventListener(RewardedAdEventType.EARNED_REWARD, async () => {
+      try {
+        const user = auth.currentUser;
+        if (user) await updateDoc(doc(db, 'users', user.uid), { points: increment(1) });
+      } catch {}
+      const act = pendingActionRef.current;
+      pendingActionRef.current = null;
+      if (act === 'answers') {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setExpanded(true);
+      } else if (act === 'video' && question.videoUrl) {
+        Linking.openURL(question.videoUrl);
+      }
+    });
+    const l3 = rewarded.addAdEventListener(AdEventType.CLOSED, () => {
+      setRewardLoaded(false);
+      rewarded.load();
+    });
+    rewarded.load();
+    return () => {
+      l1(); l2(); l3();
+    };
+  }, [question.videoUrl]);
+
+  useEffect(() => {
+    const uri = question?.contentUrl;
+    if (!uri) {
+      setContentAspectRatio(null);
+      return;
+    }
+    Image.getSize(
+      uri,
+      (w, h) => {
+        if (w > 0 && h > 0) setContentAspectRatio(w / h);
+        else setContentAspectRatio(null);
+      },
+      () => setContentAspectRatio(null)
+    );
+  }, [question?.contentUrl]);
+
+  useEffect(() => {
+    const uri = question?.answerUrl;
+    if (!uri) {
+      setAnswerAspectRatio(null);
+      return;
+    }
+    Image.getSize(
+      uri,
+      (w, h) => {
+        if (w > 0 && h > 0) setAnswerAspectRatio(w / h);
+        else setAnswerAspectRatio(null);
+      },
+      () => setAnswerAspectRatio(null)
+    );
+  }, [question?.answerUrl]);
 
   const toggleExpand = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(!expanded);
+    if (expanded) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setExpanded(false);
+      return;
+    }
+    if (!adsEnabled()) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setExpanded(true);
+      return;
+    }
+    const rewarded = rewardedRef.current;
+    pendingActionRef.current = 'answers';
+    try {
+      if (rewardLoaded) {
+        rewarded.show();
+      } else {
+        rewarded.load();
+        Alert.alert('Loading', 'Preparing rewarded ad. Try again in a moment.');
+      }
+    } catch (e) {
+      console.log('Rewarded show failed', e);
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setExpanded(true);
+    }
   };
 
   const openVideo = () => {
@@ -46,16 +134,23 @@ function QuestionCard({ question, number }) {
       </View>
 
       <View style={styles.questionBody}>
-        {question.title && (
-          <Text style={styles.questionText}>{question.title}</Text>
-        )}
+        {(() => {
+          const t = question?.title || '';
+          const n = question?.order || number;
+          const r = new RegExp(`^(?:question|q)\\s*${n}\\s*[:.)-]*\\s*`, 'i');
+          const cleaned = t.replace(r, '').trim();
+          return cleaned ? <Text style={styles.questionText}>{cleaned}</Text> : null;
+        })()}
         
         {question.contentUrl && (
           <TouchableOpacity onPress={() => showImage(question.contentUrl)}>
-            <Image 
-              source={{ uri: question.contentUrl }} 
-              style={styles.contentImage} 
-              resizeMode="contain" 
+            <Image
+              source={{ uri: question.contentUrl }}
+              style={[
+                styles.contentImage,
+                contentAspectRatio ? { aspectRatio: contentAspectRatio } : { height: 200 }
+              ]}
+              resizeMode="contain"
             />
           </TouchableOpacity>
         )}
@@ -79,10 +174,13 @@ function QuestionCard({ question, number }) {
           <Text style={styles.answerLabel}>Answer:</Text>
           {question.answerUrl ? (
             <TouchableOpacity onPress={() => showImage(question.answerUrl)}>
-              <Image 
-                source={{ uri: question.answerUrl }} 
-                style={styles.answerImage} 
-                resizeMode="contain" 
+              <Image
+                source={{ uri: question.answerUrl }}
+                style={[
+                  styles.answerImage,
+                  answerAspectRatio ? { aspectRatio: answerAspectRatio } : { height: 200 }
+                ]}
+                resizeMode="contain"
               />
             </TouchableOpacity>
           ) : (
@@ -143,7 +241,7 @@ export default function AssessmentViewerScreen({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
           <Feather name="arrow-left" size={24} color="#0053A9" />
@@ -304,14 +402,12 @@ const styles = StyleSheet.create({
   },
   contentImage: {
     width: '100%',
-    height: 200,
     marginTop: 12,
     backgroundColor: '#f9fafb',
     borderRadius: 8,
   },
   answerImage: {
     width: '100%',
-    height: 200,
     marginTop: 12,
     backgroundColor: '#f0fdf4',
     borderRadius: 8,

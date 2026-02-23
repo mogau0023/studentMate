@@ -9,6 +9,7 @@ import LoginScreen from './screens/LoginScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import MainTabs from './screens/MainTabs';
 import mobileAds from 'react-native-google-mobile-ads';
+import { StatusBar } from 'expo-status-bar';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +24,7 @@ export default function AppRoutes() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <StatusBar style="dark" translucent backgroundColor="transparent" />
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Splash" component={SplashScreen} />
@@ -35,4 +37,3 @@ export default function AppRoutes() {
     </GestureHandlerRootView>
   );
 }
-

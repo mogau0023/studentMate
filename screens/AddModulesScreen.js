@@ -3,7 +3,9 @@ import { SafeAreaView, View, Text, TextInput, TouchableOpacity, ScrollView, Styl
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, orderBy, query, addDoc, serverTimestamp, where, doc, getDoc } from 'firebase/firestore';
+import { getCachedUser } from '../utils/storage';
 
 export default function AddModulesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -11,20 +13,35 @@ export default function AddModulesScreen({ navigation }) {
   const [catalog, setCatalog] = useState([]);
   const [myModules, setMyModules] = useState([]);
   const [uniId, setUniId] = useState(null);
+  const [userId, setUserId] = useState(auth.currentUser?.uid || null);
 
   useEffect(() => {
-    const current = auth.currentUser;
-    if (!current) return;
+    // Try cached user first for cold start
+    (async () => {
+      if (!userId) {
+        const cached = await getCachedUser();
+        if (cached?.uid) setUserId(cached.uid);
+      }
+    })();
+    // Listen for auth ready
+    const unsub = onAuthStateChanged(auth, (u) => {
+      if (u?.uid) setUserId(u.uid);
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
     (async () => {
       try {
-        const snap = await getDoc(doc(db, 'users', current.uid));
+        const snap = await getDoc(doc(db, 'users', userId));
         if (snap.exists()) {
           const data = snap.data();
           if (data?.universityId) setUniId(data.universityId);
         }
       } catch (e) {}
     })();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     if (!uniId) return;
@@ -38,16 +55,15 @@ export default function AddModulesScreen({ navigation }) {
   }, [uniId]);
 
   useEffect(() => {
-    const current = auth.currentUser;
-    if (!current) return;
-    const q = query(collection(db, 'users', current.uid, 'modules'), orderBy('createdAt', 'desc'));
+    if (!userId) return;
+    const q = query(collection(db, 'users', userId, 'modules'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, (snap) => {
       const list = [];
       snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
       setMyModules(list);
     });
     return unsub;
-  }, []);
+  }, [userId]);
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
@@ -65,10 +81,11 @@ export default function AddModulesScreen({ navigation }) {
 
   const addModule = async (mod) => {
     const current = auth.currentUser;
-    if (!current || !mod) return;
+    const uid = current?.uid || userId;
+    if (!uid || !mod) return;
     if (isAdded(mod.code)) return;
     try {
-      await addDoc(collection(db, 'users', current.uid, 'modules'), {
+      await addDoc(collection(db, 'users', uid, 'modules'), {
         code: norm(mod.code),
         name: mod.name || '',
         moduleId: mod.id, // Save the original module ID
@@ -81,7 +98,7 @@ export default function AddModulesScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Feather name="chevron-left" size={22} color="#111827" />

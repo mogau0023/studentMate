@@ -1,8 +1,11 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom-tabs';
 import { SafeAreaView, View, Text } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import HomeStack from './HomeStack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import { bannerUnitId, adsEnabled } from '../utils/ads';
 
 function Placeholder() {
   return (
@@ -33,6 +36,26 @@ function ProfileStackScreen() {
   );
 }
 
+function TabBarWithBanner(props) {
+  const insets = useSafeAreaInsets();
+  const BANNER_UNIT_ID = bannerUnitId();
+  return (
+    <View>
+      {adsEnabled() ? (
+        <View style={{ alignItems: 'center', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
+          <BannerAd
+            unitId={BANNER_UNIT_ID}
+            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+            onAdLoaded={() => console.log('Global banner loaded')}
+            onAdFailedToLoad={(e) => console.log('Global banner failed', e)}
+          />
+        </View>
+      ) : null}
+      <BottomTabBar {...props} />
+    </View>
+  );
+}
+
 export default function MainTabs() {
   return (
     <Tab.Navigator
@@ -41,6 +64,7 @@ export default function MainTabs() {
         tabBarShowLabel: false,
         tabBarStyle: { height: 64, paddingBottom: 10, paddingTop: 8 },
       }}
+      tabBar={(p) => <TabBarWithBanner {...p} />}
     >
       <Tab.Screen
         name="Home"

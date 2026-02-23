@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
+import { saveUserToCache, clearCachedUser } from '../utils/storage';
 
 export default function ProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -22,7 +23,17 @@ export default function ProfileScreen({ navigation }) {
       const docRef = doc(db, 'users', user.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setProfile(docSnap.data());
+        const data = docSnap.data();
+        setProfile(data);
+        await saveUserToCache({
+          uid: user.uid,
+          email: user.email,
+          name: data?.name || user.displayName || '',
+          universityId: data?.universityId || '',
+          universityName: data?.universityName || data?.university || '',
+          points: data?.points || 0,
+          subscriptionActive: !!data?.subscriptionActive,
+        });
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -39,6 +50,7 @@ export default function ProfileScreen({ navigation }) {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      await clearCachedUser();
       navigation.reset({
         index: 0,
         routes: [{ name: 'Login' }],
@@ -49,7 +61,7 @@ export default function ProfileScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
       <ScrollView 
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 20 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}

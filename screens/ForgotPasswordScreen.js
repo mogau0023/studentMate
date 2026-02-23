@@ -29,7 +29,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: WAVE_HEIGHT + insets.bottom + 24 }]}>
         <LogoHeader title="Forgot Password?" />
         <View style={styles.form}>
@@ -51,4 +51,3 @@ const styles = StyleSheet.create({
   form: { flex: 1, marginTop: 8 },
   linkText: { color: '#0053A9', fontSize: 14, fontWeight: '600' },
 });
-

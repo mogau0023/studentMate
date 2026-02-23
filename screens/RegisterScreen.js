@@ -5,6 +5,7 @@ import { LogoHeader, Field, PrimaryButton, Wave, WAVE_HEIGHT } from '../componen
 import { auth, db } from '../firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { saveUserToCache } from '../utils/storage';
 
 export default function RegisterScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -59,6 +60,15 @@ export default function RegisterScreen({ navigation }) {
         },
         { merge: true }
       );
+      await saveUserToCache({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        name: fullName,
+        universityId: selectedUniversity?.id || '',
+        universityName: selectedUniversity?.name || '',
+        points: 0,
+        subscriptionActive: false,
+      });
       navigation.reset({
         index: 0,
         routes: [{ name: 'MainTabs' }],
@@ -71,7 +81,7 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: WAVE_HEIGHT + insets.bottom + 24 }]}>
         <LogoHeader title="Create Account" />
         <View style={styles.form}>

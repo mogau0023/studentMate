@@ -55,7 +55,7 @@ export default function PracticeTopicsScreen({ navigation, route }) {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
           <Feather name="arrow-left" size={24} color="#0053A9" />
