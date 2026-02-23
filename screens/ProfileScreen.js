@@ -61,11 +61,11 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 20 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        
+
         <View style={styles.header}>
           <Text style={styles.screenTitle}>Profile</Text>
         </View>
@@ -108,9 +108,9 @@ export default function ProfileScreen({ navigation }) {
         {/* Menu Items */}
         <View style={styles.menuSection}>
           <Text style={styles.menuHeader}>Account</Text>
-          
-          <TouchableOpacity 
-            style={styles.menuItem} 
+
+          <TouchableOpacity
+            style={styles.menuItem}
             onPress={() => navigation.navigate('EditProfile', { currentName: profile?.name, currentUni: profile?.universityName || profile?.university })}
           >
             <Feather name="edit-2" size={20} color="#666" />
@@ -129,16 +129,27 @@ export default function ProfileScreen({ navigation }) {
 
         <View style={styles.menuSection}>
           <Text style={styles.menuHeader}>Support</Text>
-          
+
           <TouchableOpacity style={styles.menuItem} onPress={() => console.log('Help')}>
             <Feather name="help-circle" size={20} color="#666" />
             <Text style={styles.menuText}>Help & FAQ</Text>
             <Feather name="chevron-right" size={20} color="#ccc" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => console.log('Terms')}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Terms")}>
             <Feather name="file-text" size={20} color="#666" />
-            <Text style={styles.menuText}>Terms & Privacy</Text>
+            <Text style={styles.menuText}>Terms Of Use</Text>
+            <Feather name="chevron-right" size={20} color="#ccc" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Privacy")}>
+            <Feather name="shield" size={20} color="#666" />
+            <Text style={styles.menuText}>Privacy Policy</Text>
+            <Feather name="chevron-right" size={20} color="#ccc" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("ReportProblem")}>
+            <Feather name="alert-triangle" size={20} color="#666" />
+            <Text style={styles.menuText}>Report a problem</Text>
             <Feather name="chevron-right" size={20} color="#ccc" />
           </TouchableOpacity>
 

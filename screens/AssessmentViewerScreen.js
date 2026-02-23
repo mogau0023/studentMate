@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, LayoutAnimation, UIManager, Platform, Image, ActivityIndicator, Linking, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import { collection, query, where, getDocs, orderBy, updateDoc, doc, increment } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, } from 'firebase/firestore';
 import ImageViewer from 'react-native-image-zoom-viewer';
-import { auth, db } from '../firebase';
+import { db } from '../firebase';
 import { RewardedAd, RewardedAdEventType, AdEventType } from 'react-native-google-mobile-ads';
-import { rewardedUnitId, adsEnabled } from '../utils/ads';
 import { useSubscription } from "../providers/SubscriptionProvider";
+import * as ScreenCapture from "expo-screen-capture";
+import { rewardedUnitId } from '../utils/ads';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -22,7 +23,7 @@ function QuestionCard({ question, number }) {
   const { isPro } = useSubscription();
 
   // ✅ Keep your rewarded setup, but only use it for FREE users
-  const rewardedRef = useRef(RewardedAd.createForAdRequest(rewardedUnitId()));
+  const rewardedRef = useRef(null);
   const [rewardLoaded, setRewardLoaded] = useState(false);
   const pendingActionRef = useRef(null); // 'answers' | 'video' | null
 
@@ -30,6 +31,9 @@ function QuestionCard({ question, number }) {
   const [answerAspectRatio, setAnswerAspectRatio] = useState(null);
 
   useEffect(() => {
+    if (!rewardedRef.current) {
+      rewardedRef.current = RewardedAd.createForAdRequest(rewardedUnitId());
+    }
     // ✅ Pro users should never load/use rewarded ads
     if (isPro) return;
 
@@ -238,6 +242,23 @@ export default function AssessmentViewerScreen({ navigation, route }) {
   useEffect(() => {
     fetchQuestions();
   }, []);
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        await ScreenCapture.preventScreenCaptureAsync();
+      } catch { }
+    })();
+
+    return () => {
+      (async () => {
+        try {
+          await ScreenCapture.allowScreenCaptureAsync();
+        } catch { }
+      })();
+    };
+  }, []);
 
   const fetchQuestions = async () => {
     try {
@@ -246,7 +267,7 @@ export default function AssessmentViewerScreen({ navigation, route }) {
         collection(db, 'assessments', assessment.id, 'questions'),
         orderBy('order', 'asc')
       );
-      
+
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -258,7 +279,7 @@ export default function AssessmentViewerScreen({ navigation, route }) {
       console.error("Error fetching questions:", error);
       // Fallback: check if questions are embedded in the assessment document itself (as array)
       if (assessment.questions && Array.isArray(assessment.questions)) {
-         setQuestions(assessment.questions);
+        setQuestions(assessment.questions);
       }
     } finally {
       setLoading(false);
@@ -313,7 +334,7 @@ const styles = StyleSheet.create({
   headerButton: { padding: 8 },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#0053A9', flex: 1, textAlign: 'center', textTransform: 'uppercase' },
   content: { padding: 16 },
-  
+
   questionCard: {
     backgroundColor: '#fff',
     borderRadius: 16,

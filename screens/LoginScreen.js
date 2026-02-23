@@ -33,8 +33,6 @@ export default function LoginScreen({ navigation }) {
         name: profile?.name || u.displayName || '',
         universityId: profile?.universityId || '',
         universityName: profile?.universityName || profile?.university || '',
-        points: profile?.points || 0,
-        subscriptionActive: !!profile?.subscriptionActive,
       });
       navigation.reset({
         index: 0,

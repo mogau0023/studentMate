@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ---------- MODULES ----------
+    match /modules/{moduleId} {
+      allow read: if isSignedIn();     // students + admins
+      allow create, update, delete: if isAdmin(); // admins only
+    }
+
+    // ---------- UNIVERSITIES ----------
+    match /universities/{universityId} {
+      allow read: if true;             // public list is fine
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ---------- ANNOUNCEMENTS ----------
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ---------- ASSESSMENTS ----------
+    match /assessments/{assessmentId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+
+      // Subcollection: questions under an assessment
+      match /questions/{questionId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    // ---------- USERS ----------
+    match /users/{userId} {
+      // Read own profile; admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Registration: user creates ONLY their own doc (docId must equal auth.uid)
+      allow create: if isOwner(userId);
+
+      // User can update ONLY safe fields on their own profile
+      // (Prevents users from giving themselves points/subscription/admin stuff)
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).changedKeys()
+          .hasOnly([
+            "name",
+            "universityId",
+            "updatedAt"
+          ]);
+
+      // Only admins can delete user docs (optional)
+      allow delete: if isAdmin();
+
+      // Subcollection: user's module list
+      match /modules/{docId} {
+        // user can manage their own added modules
+        allow read, create, update, delete: if isOwner(userId);
+      }
+    }
+// ---------- UPLOADS ----------
+match /uploads/{uploadId} {
+  // user can create their own upload record
+  allow create: if isSignedIn();
+
+  // user can read their own uploads; admins can read all
+  allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.uid);
+
+  // only admins can update status/metadata
+  allow update, delete: if isAdmin();
+}
+match /user_uploads/{docId} {
+  allow create: if isSignedIn();
+  allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.uid);
+  allow update, delete: if isAdmin();
+}
+
+// ---------- REPORTS ----------
+match /reports/{reportId} {
+  allow create: if isSignedIn();
+  allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.uid);
+  allow update, delete: if isAdmin();
+}
+    // ---------- ADMINS ----------
+    match /admins/{adminId} {
+      // Admin can read their own admin doc; other users cannot
+      allow read: if isOwner(adminId);
+
+      // Nobody can create/update/delete admin docs from client
+      // (Create admins via Firebase Admin SDK / Console only)
+      allow create, update, delete: if false;
+    }
+
+    // ---------- DEFAULT DENY ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -22,6 +22,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ProfileScreen from './ProfileScreen';
 import UploadScreen from './UploadScreen';
 import EditProfileScreen from './EditProfileScreen';
+import PaywallScreen from "./PaywallScreen";
+import TermsScreen from "./TermsScreen";
+import PrivacyScreen from "./PrivacyScreen";
+import ReportProblemScreen from "./ReportProblemScreen";
 
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
@@ -30,6 +34,10 @@ function ProfileStackScreen() {
     <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
       <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
+      <ProfileStack.Screen name="Paywall" component={PaywallScreen} />
+      <ProfileStack.Screen name="Terms" component={TermsScreen} />
+      <ProfileStack.Screen name="Privacy" component={PrivacyScreen} />
+      <ProfileStack.Screen name="ReportProblem" component={ReportProblemScreen} />
     </ProfileStack.Navigator>
   );
 }
@@ -43,12 +51,12 @@ function TabBarWithBanner(props) {
       {adsEnabled() ? (
         <View style={{ alignItems: 'center', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
           {!isPro ? (
-          <BannerAd
-            unitId={BANNER_UNIT_ID}
-            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-            onAdLoaded={() => console.log('Global banner loaded')}
-            onAdFailedToLoad={(e) => console.log('Global banner failed', e)}
-          />
+            <BannerAd
+              unitId={BANNER_UNIT_ID}
+              size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+              onAdLoaded={() => console.log('Global banner loaded')}
+              onAdFailedToLoad={(e) => console.log('Global banner failed', e)}
+            />
           ) : null}
         </View>
       ) : null}

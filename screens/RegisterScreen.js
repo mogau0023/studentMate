@@ -66,8 +66,6 @@ export default function RegisterScreen({ navigation }) {
         name: fullName,
         universityId: selectedUniversity?.id || '',
         universityName: selectedUniversity?.name || '',
-        points: 0,
-        subscriptionActive: false,
       });
       navigation.reset({
         index: 0,
