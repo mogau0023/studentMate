@@ -16,28 +16,65 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    function adminData() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid)).data;
+    }
+
+    function adminRole() {
+      return isAdmin() ? adminData().role : null;
+    }
+
+    function adminUniversityId() {
+      return isAdmin() ? adminData().universityId : null;
+    }
+
+    function isSuperAdmin() {
+      return adminRole() == "superadmin";
+    }
+
+    function isUniversityAdmin() {
+      return adminRole() == "university_admin";
+    }
+
+    function canWriteUniversity(universityId) {
+      return isSuperAdmin() || (isUniversityAdmin() && adminUniversityId() == universityId);
+    }
+
     // ---------- MODULES ----------
     match /modules/{moduleId} {
       allow read: if isSignedIn();     // students + admins
-      allow create, update, delete: if isAdmin(); // admins only
+      allow create: if isAdmin() && canWriteUniversity(request.resource.data.universityId);
+      allow update: if isAdmin()
+        && request.resource.data.universityId == resource.data.universityId
+        && canWriteUniversity(resource.data.universityId);
+      allow delete: if isAdmin() && canWriteUniversity(resource.data.universityId);
     }
 
     // ---------- UNIVERSITIES ----------
     match /universities/{universityId} {
       allow read: if true;             // public list is fine
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isSuperAdmin();
     }
 
     // ---------- ANNOUNCEMENTS ----------
     match /announcements/{announcementId} {
       allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow create: if isAdmin()
+        && (isSuperAdmin() || request.resource.data.universityId == adminUniversityId());
+      allow update: if isAdmin()
+        && (isSuperAdmin() || resource.data.universityId == adminUniversityId())
+        && request.resource.data.universityId == resource.data.universityId;
+      allow delete: if isAdmin() && (isSuperAdmin() || resource.data.universityId == adminUniversityId());
     }
 
     // ---------- ASSESSMENTS ----------
     match /assessments/{assessmentId} {
       allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow create: if isAdmin() && canWriteUniversity(request.resource.data.universityId);
+      allow update: if isAdmin()
+        && request.resource.data.universityId == resource.data.universityId
+        && canWriteUniversity(resource.data.universityId);
+      allow delete: if isAdmin() && canWriteUniversity(resource.data.universityId);
 
       // Subcollection: questions under an assessment
       match /questions/{questionId} {
@@ -64,6 +101,17 @@ service cloud.firestore {
             "updatedAt"
           ]);
 
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).changedKeys()
+          .hasOnly([
+            "name",
+            "points",
+            "subscriptionActive",
+            "subscriptionExpiry",
+            "banned",
+            "updatedAt"
+          ]);
+
       // Only admins can delete user docs (optional)
       allow delete: if isAdmin();
 
@@ -85,7 +133,9 @@ match /uploads/{uploadId} {
   allow update, delete: if isAdmin();
 }
 match /user_uploads/{docId} {
-  allow create: if isSignedIn();
+  allow create: if isSignedIn()
+    && request.resource.data.uid == request.auth.uid
+    && request.resource.data.status == "pending";
   allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.uid);
   allow update, delete: if isAdmin();
 }
@@ -98,12 +148,28 @@ match /reports/{reportId} {
 }
     // ---------- ADMINS ----------
     match /admins/{adminId} {
-      // Admin can read their own admin doc; other users cannot
-      allow read: if isOwner(adminId);
+      allow read: if isSuperAdmin() || isOwner(adminId);
 
-      // Nobody can create/update/delete admin docs from client
-      // (Create admins via Firebase Admin SDK / Console only)
-      allow create, update, delete: if false;
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    match /system_config/{configId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    match /admin_upload_batches/{batchId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && (isSuperAdmin() || request.auth.uid == resource.data.createdBy);
+      allow delete: if isSuperAdmin();
+
+      match /items/{itemId} {
+        allow read: if isAdmin();
+        allow create: if isAdmin();
+        allow update: if isAdmin();
+        allow delete: if isSuperAdmin();
+      }
     }
 
     // ---------- DEFAULT DENY ----------

@@ -19,6 +19,7 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import * as FileSystem from "expo-file-system/legacy";
 import { File } from "expo-file-system";
+import { colors, cardShadow } from "../utils/webTheme";
 
 export default function UploadScreen() {
   const insets = useSafeAreaInsets();
@@ -304,86 +305,83 @@ export default function UploadScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#f8f9fb" },
+  safeArea: { flex: 1, backgroundColor: colors.backgroundAlt },
   content: { padding: 24 },
 
   header: { marginBottom: 14 },
-  screenTitle: { fontSize: 28, fontWeight: "800", color: "#0053A9" },
+  screenTitle: { fontSize: 28, fontWeight: "800", color: colors.brand },
 
   infoCard: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
     padding: 24,
     borderRadius: 16,
     alignItems: "center",
     marginBottom: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    ...cardShadow,
   },
   iconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#e0f2fe",
+    backgroundColor: colors.accentSoft,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
-  infoTitle: { fontSize: 18, fontWeight: "800", color: "#111827", marginBottom: 8, textAlign: "center" },
-  infoText: { fontSize: 14, color: "#6b7280", textAlign: "center", lineHeight: 20 },
+  infoTitle: { fontSize: 18, fontWeight: "800", color: colors.text, marginBottom: 8, textAlign: "center" },
+  infoText: { fontSize: 14, color: colors.muted, textAlign: "center", lineHeight: 20 },
 
   bigUploadCard: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
     borderRadius: 18,
     paddingVertical: 34,
     paddingHorizontal: 18,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#eef2f7",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 3,
+    borderColor: colors.borderSoft,
+    ...cardShadow,
   },
   bigUploadIconWrap: {
     width: 92,
     height: 92,
     borderRadius: 20,
-    backgroundColor: "#e0f2fe",
+    backgroundColor: colors.accentSoft,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 14,
   },
-  bigUploadTitle: { fontSize: 18, fontWeight: "900", color: "#111827", textAlign: "center" },
-  bigUploadSub: { marginTop: 6, fontSize: 13, fontWeight: "700", color: "#6b7280", textAlign: "center" },
+  bigUploadTitle: { fontSize: 18, fontWeight: "900", color: colors.text, textAlign: "center" },
+  bigUploadSub: { marginTop: 6, fontSize: 13, fontWeight: "700", color: colors.muted, textAlign: "center" },
 
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: colors.overlay,
     alignItems: "center",
     justifyContent: "center",
     padding: 18,
   },
   modalCard: {
     width: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
   },
-  modalTitle: { fontSize: 18, fontWeight: "900", color: "#111827", marginBottom: 10 },
+  modalTitle: { fontSize: 18, fontWeight: "900", color: colors.text, marginBottom: 10 },
 
-  modalLabel: { marginTop: 10, fontWeight: "800", color: "#374151", marginBottom: 6 },
+  modalLabel: { marginTop: 10, fontWeight: "800", color: colors.textSoft, marginBottom: 6 },
   modalInput: {
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "#fff",
+    backgroundColor: colors.input,
+    color: colors.text,
   },
 
   typeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
@@ -392,11 +390,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#fff",
+    borderColor: colors.border,
+    backgroundColor: colors.input,
   },
-  typeChipActive: { backgroundColor: "#0053A9", borderColor: "#0053A9" },
-  typeChipText: { fontWeight: "900", color: "#111827" },
+  typeChipActive: { backgroundColor: colors.brandStrong, borderColor: colors.brandStrong },
+  typeChipText: { fontWeight: "900", color: colors.text },
   typeChipTextActive: { color: "#fff" },
 
   modalActions: { flexDirection: "row", gap: 10, marginTop: 16 },
@@ -406,18 +404,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f3f4f6",
+    backgroundColor: colors.surfaceMuted,
   },
-  modalBtnGhostText: { fontWeight: "900", color: "#111827" },
+  modalBtnGhostText: { fontWeight: "900", color: colors.text },
   modalBtnPrimary: {
     flex: 1,
     height: 48,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0053A9",
+    backgroundColor: colors.brandStrong,
   },
   modalBtnPrimaryText: { fontWeight: "900", color: "#fff" },
 
-  fileHint: { marginTop: 12, color: "#6b7280", fontWeight: "700" },
+  fileHint: { marginTop: 12, color: colors.muted, fontWeight: "700" },
 });

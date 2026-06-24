@@ -2,6 +2,8 @@ import React from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { ScreenHeader } from '../components/UI';
+import { colors, cardShadow } from '../utils/webTheme';
 
 const { width } = Dimensions.get('window');
 const CARD_GAP = 16;
@@ -23,23 +25,19 @@ function DashboardCard({ title, icon, color, onPress, library = 'MaterialCommuni
 
 export default function ModuleDashboardScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const { moduleCode, moduleName, moduleId } = route.params || {};
+  const { moduleCode } = route.params || {};
 
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-          <Feather name="arrow-left" size={24} color="#0053A9" />
-        </TouchableOpacity>
-        
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>{moduleCode}</Text>
-        </View>
-
-        <TouchableOpacity style={styles.headerButton}>
-          <Feather name="heart" size={24} color="#0053A9" />
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={moduleCode}
+        onBack={() => navigation.goBack()}
+        iconColor={colors.brand}
+        containerStyle={styles.header}
+        titleStyle={styles.headerTitle}
+        buttonStyle={styles.headerButton}
+        rightIconName="heart"
+      />
 
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}>
         <View style={styles.grid}>
@@ -74,7 +72,7 @@ export default function ModuleDashboardScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
+  safeArea: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -82,19 +80,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
   },
   headerButton: {
     padding: 8,
   },
-  headerTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#0053A9',
+    color: colors.brand,
   },
   scrollContent: {
     padding: 24,
@@ -106,16 +100,14 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
     marginBottom: CARD_GAP,
     overflow: 'hidden',
     height: 140, // Fixed height for uniformity
+    ...cardShadow,
   },
   cardTopLine: {
     height: 4,

@@ -1,20 +1,24 @@
 import React from "react";
-import { SafeAreaView, ScrollView, Text, StyleSheet, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, Text, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { ScreenHeader } from "../components/UI";
+import { colors } from "../utils/webTheme";
 
 export default function TermsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
 
   return (
     <SafeAreaView style={[styles.safe, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="chevron-left" size={26} color="#111" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Terms of Use</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader
+        title="Terms of Use"
+        onBack={() => navigation.goBack()}
+        leftIconName="chevron-left"
+        iconColor={colors.text}
+        containerStyle={styles.header}
+        titleStyle={styles.title}
+        buttonStyle={styles.backBtn}
+        rightPlaceholderWidth={40}
+      />
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
         <Text style={styles.h}>StudentMate Terms</Text>
@@ -38,9 +42,9 @@ export default function TermsScreen({ navigation }) {
           You are responsible for your account. If you think your account is being misused, report a problem from Profile.
         </Text>
 
-        <Text style={styles.h}>Subscriptions</Text>
+        <Text style={styles.h}>Ads</Text>
         <Text style={styles.p}>
-          StudentMate Pro removes ads. Subscription billing is handled by the app store. You can restore purchases in the Paywall screen.
+          StudentMate may show ads between papers.
         </Text>
 
         <Text style={styles.h}>Changes</Text>
@@ -53,11 +57,11 @@ export default function TermsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#eee" },
+  safe: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
   backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-  title: { flex: 1, textAlign: "center", fontSize: 18, fontWeight: "900", color: "#111" },
+  title: { flex: 1, textAlign: "center", fontSize: 18, fontWeight: "900", color: colors.text },
   content: { padding: 16 },
-  h: { marginTop: 14, fontSize: 16, fontWeight: "900", color: "#0f172a" },
-  p: { marginTop: 6, color: "#475569", lineHeight: 20 },
+  h: { marginTop: 14, fontSize: 16, fontWeight: "900", color: colors.text },
+  p: { marginTop: 6, color: colors.textSoft, lineHeight: 20 },
 });

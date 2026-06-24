@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import { ScreenHeader } from '../components/UI';
+import { colors } from '../utils/webTheme';
 
 export default function PracticeTopicsScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -43,26 +44,25 @@ export default function PracticeTopicsScreen({ navigation, route }) {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity 
-      style={styles.card}
+      style={styles.row}
       onPress={() => navigation.navigate('PracticePapers', { moduleId, moduleCode, topic: item })}
+      activeOpacity={0.7}
     >
-      <View style={styles.cardContent}>
-        <Feather name="folder" size={24} color="#F59E0B" style={{ marginRight: 12 }} />
-        <Text style={styles.cardTitle}>{item}</Text>
-      </View>
-      <Feather name="chevron-right" size={20} color="#ccc" />
+      <Text style={styles.rowTitle}>{item}</Text>
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-          <Feather name="arrow-left" size={24} color="#0053A9" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Practice Topics</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader
+        title="Practice Topics"
+        onBack={() => navigation.goBack()}
+        iconColor={colors.brand}
+        containerStyle={styles.header}
+        titleStyle={styles.headerTitle}
+        buttonStyle={styles.headerButton}
+        rightPlaceholderWidth={40}
+      />
 
       {loading ? (
         <View style={styles.center}>
@@ -74,6 +74,7 @@ export default function PracticeTopicsScreen({ navigation, route }) {
           renderItem={renderItem}
           keyExtractor={(item) => item}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 20 }]}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
           ListEmptyComponent={
             <View style={styles.center}>
               <Text style={styles.emptyText}>No practice topics found.</Text>
@@ -86,7 +87,7 @@ export default function PracticeTopicsScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
+  safeArea: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -94,29 +95,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
   },
   headerButton: { padding: 8 },
-  headerTitle: { fontSize: 18, fontWeight: '600', color: '#1b1b1f' },
-  listContent: { padding: 16 },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  cardContent: { flexDirection: 'row', alignItems: 'center' },
-  cardTitle: { fontSize: 16, fontWeight: '500', color: '#333' },
+  headerTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
+  listContent: { paddingHorizontal: 16, paddingTop: 8 },
+  row: { paddingVertical: 14 },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
+  rowTitle: { fontSize: 16, fontWeight: '500', color: colors.text },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 40 },
-  emptyText: { color: '#888', fontSize: 16 },
+  emptyText: { color: colors.muted, fontSize: 16 },
 });

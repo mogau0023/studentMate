@@ -6,6 +6,8 @@ import { auth, db } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, orderBy, query, addDoc, serverTimestamp, where, doc, getDoc } from 'firebase/firestore';
 import { getCachedUser } from '../utils/storage';
+import { ScreenHeader } from '../components/UI';
+import { colors } from '../utils/webTheme';
 
 export default function AddModulesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -99,20 +101,23 @@ export default function AddModulesScreen({ navigation }) {
 
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="chevron-left" size={22} color="#111827" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Modules</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <ScreenHeader
+        title="Add Modules"
+        onBack={() => navigation.goBack()}
+        leftIconName="chevron-left"
+        iconColor={colors.text}
+        containerStyle={styles.headerRow}
+        titleStyle={styles.headerTitle}
+        buttonStyle={styles.backBtn}
+        rightPlaceholderWidth={22}
+      />
 
       <View style={[styles.searchBar, { marginHorizontal: 24 }]}>
-        <Feather name="search" size={18} color="#6b7280" />
+        <Feather name="search" size={18} color={colors.muted} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search modules"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.muted}
           value={search}
           onChangeText={setSearch}
         />
@@ -127,11 +132,11 @@ export default function AddModulesScreen({ navigation }) {
             </View>
             {isAdded(m.code) ? (
               <View style={styles.addedBadge}>
-                <Feather name="check" size={16} color="#0053A9" />
+                <Feather name="check" size={16} color={colors.brand} />
                 <Text style={styles.addedText}>Added</Text>
               </View>
             ) : (
-              <TouchableOpacity onPress={() => addModule(m)} style={styles.plusCircle}>
+              <TouchableOpacity onPress={() => addModule(m)} style={styles.plusCircle} activeOpacity={0.7}>
                 <Feather name="plus" size={18} color="#fff" />
               </TouchableOpacity>
             )}
@@ -143,40 +148,49 @@ export default function AddModulesScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
+  safeArea: { flex: 1, backgroundColor: colors.background },
   headerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingTop: 14, paddingBottom: 8 },
   backBtn: { padding: 8, marginRight: 8 },
-  headerTitle: { flex: 1, textAlign: 'left', fontSize: 20, fontWeight: '600', color: '#111827' },
+  headerTitle: { flex: 1, textAlign: 'left', fontSize: 20, fontWeight: '600', color: colors.text },
   searchBar: {
     height: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#d7deec',
-    backgroundColor: '#f7f8fb',
+    borderColor: colors.border,
+    backgroundColor: colors.input,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  searchInput: { flex: 1, color: '#111827', fontSize: 15 },
+  searchInput: { flex: 1, color: colors.text, fontSize: 15 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-    marginBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
-  code: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  name: { fontSize: 13, color: '#6b7280', marginTop: 2 },
-  plusCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#0053A9', alignItems: 'center', justifyContent: 'center' },
-  addedBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1, borderColor: '#c7d7f5', paddingHorizontal: 10, paddingVertical: 6 },
-  addedText: { marginLeft: 6, color: '#0053A9', fontWeight: '600', fontSize: 12 },
+  code: { fontSize: 15, fontWeight: '600', color: colors.text },
+  name: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  plusCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.brandStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.infoBorder,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: colors.accentSoft,
+  },
+  addedText: { marginLeft: 6, color: colors.brand, fontWeight: '600', fontSize: 12 },
 });
 

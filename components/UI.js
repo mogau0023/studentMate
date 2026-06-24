@@ -1,28 +1,40 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Image, Modal, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, isWebDark } from '../utils/webTheme';
 
 export const WAVE_HEIGHT = 160;
 
 export function Wave() {
   const insets = useSafeAreaInsets();
+  const gradients = isWebDark
+    ? {
+        g1: ['#0f172a', '#0b1120'],
+        g2: ['#111c34', '#0f172a'],
+        g3: ['#172554', '#0f172a'],
+      }
+    : {
+        g1: ['#edf4ff', '#dfeaff'],
+        g2: ['#e1ecff', '#cfe2ff'],
+        g3: ['#d6e6ff', '#c6dbff'],
+      };
   return (
     <View pointerEvents="none" style={[styles.wave, { bottom: -insets.bottom }]}>
       <Svg width="100%" height="160" viewBox="0 0 375 160" preserveAspectRatio="none">
         <Defs>
           <LinearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#edf4ff" />
-            <Stop offset="1" stopColor="#dfeaff" />
+            <Stop offset="0" stopColor={gradients.g1[0]} />
+            <Stop offset="1" stopColor={gradients.g1[1]} />
           </LinearGradient>
           <LinearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#e1ecff" />
-            <Stop offset="1" stopColor="#cfe2ff" />
+            <Stop offset="0" stopColor={gradients.g2[0]} />
+            <Stop offset="1" stopColor={gradients.g2[1]} />
           </LinearGradient>
           <LinearGradient id="g3" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#d6e6ff" />
-            <Stop offset="1" stopColor="#c6dbff" />
+            <Stop offset="0" stopColor={gradients.g3[0]} />
+            <Stop offset="1" stopColor={gradients.g3[1]} />
           </LinearGradient>
         </Defs>
         <Path
@@ -61,6 +73,49 @@ export function PrimaryButton({ label, onPress }) {
   );
 }
 
+export function ScreenHeader({
+  title,
+  onBack,
+  leftIconName = 'arrow-left',
+  iconColor = '#0053A9',
+  right,
+  rightIconName,
+  onRightPress,
+  containerStyle,
+  titleStyle,
+  buttonStyle,
+  rightPlaceholderWidth = 40,
+  titleNumberOfLines = 1,
+}) {
+  const Right =
+    right ??
+    (rightIconName ? (
+      <TouchableOpacity onPress={onRightPress} style={buttonStyle}>
+        <Feather name={rightIconName} size={24} color={iconColor} />
+      </TouchableOpacity>
+    ) : (
+      <View style={{ width: rightPlaceholderWidth }} />
+    ));
+
+  return (
+    <View style={[styles.screenHeader, containerStyle]}>
+      {onBack ? (
+        <TouchableOpacity onPress={onBack} style={buttonStyle}>
+          <Feather name={leftIconName} size={24} color={iconColor} />
+        </TouchableOpacity>
+      ) : (
+        <View style={{ width: rightPlaceholderWidth }} />
+      )}
+
+      <Text style={[styles.screenHeaderTitle, titleStyle]} numberOfLines={titleNumberOfLines}>
+        {title}
+      </Text>
+
+      {Right}
+    </View>
+  );
+}
+
 export function Field({
   label,
   placeholder,
@@ -83,7 +138,7 @@ export function Field({
         {iconName ? <Feather name={iconName} size={18} color="#a0a7b5" style={styles.inputIcon} /> : null}
         <TextInput
           placeholder={placeholder}
-          placeholderTextColor="#a0a7b5"
+          placeholderTextColor={colors.muted}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={isPassword ? hidden : false}
@@ -92,10 +147,10 @@ export function Field({
         />
         {isPassword ? (
           <TouchableOpacity onPress={() => setHidden(!hidden)} style={styles.toggleButton}>
-            <Feather name={hidden ? 'eye' : 'eye-off'} size={18} color="#6b7280" />
+            <Feather name={hidden ? 'eye' : 'eye-off'} size={18} color={colors.muted} />
           </TouchableOpacity>
         ) : rightIconName ? (
-          <Feather name={rightIconName} size={18} color="#a0a7b5" style={styles.inputRightIcon} />
+          <Feather name={rightIconName} size={18} color={colors.muted} style={styles.inputRightIcon} />
         ) : null}
       </View>
     </View>
@@ -107,71 +162,25 @@ export function SectionTitle({ text }) {
 }
 
 export function ModuleCard({ code, name, actionLabel, onPress }) {
-  if (actionLabel) {
-    return (
-      <View style={styles.cardRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardCode}>{code}</Text>
-          <Text style={styles.cardName}>{name}</Text>
-        </View>
-        <TouchableOpacity onPress={onPress} style={styles.cardAction}>
-          <Text style={styles.cardActionText}>{actionLabel}</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  return (
-    <TouchableOpacity style={styles.cardRow} onPress={onPress}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.cardCode}>{code}</Text>
-        <Text style={styles.cardName}>{name}</Text>
-      </View>
-    </TouchableOpacity>
+  const content = (
+    <View style={{ flex: 1 }}>
+      <Text style={styles.cardCode}>{code}</Text>
+      <Text style={styles.cardName}>{name}</Text>
+    </View>
   );
-}
 
-export function AddModuleModal({ visible, onClose, onSubmit }) {
-  const [code, setCode] = useState('');
-  const [name, setName] = useState('');
-  const handleAdd = () => {
-    if (!code || !name) return;
-    onSubmit({ code: code.trim().toUpperCase(), name: name.trim() });
-    setCode('');
-    setName('');
-  };
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalSheet}>
-          <Text style={styles.modalTitle}>Add Module</Text>
-          <View style={{ marginTop: 12 }}>
-            <Field
-              label="Code"
-              placeholder="e.g., COS132"
-              value={code}
-              onChangeText={setCode}
-              iconName="tag"
-            />
-            <Field
-              label="Name"
-              placeholder="e.g., Computer Science 132"
-              value={name}
-              onChangeText={setName}
-              iconName="book"
-            />
-          </View>
-          <View style={styles.modalActions}>
-            <TouchableOpacity onPress={onClose} style={styles.modalSecondary}>
-              <Text style={styles.modalSecondaryText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleAdd} style={styles.modalPrimary}>
-              <Text style={styles.modalPrimaryText}>Add</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
+    <View style={styles.listRow}>
+      {onPress ? (
+        <TouchableOpacity style={{ flex: 1 }} onPress={onPress} activeOpacity={0.7}>
+          {content}
+        </TouchableOpacity>
+      ) : (
+        content
+      )}
+
+      {actionLabel ? <Text style={styles.listActionText}>{actionLabel}</Text> : null}
+    </View>
   );
 }
 
@@ -193,16 +202,16 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#0053A9',
+    color: colors.brand,
   },
   screenTitle: {
     fontSize: 22,
     fontWeight: '600',
-    color: '#1b1b1f',
+    color: colors.text,
   },
   primaryButton: {
     marginTop: 8,
-    backgroundColor: '#0053A9',
+    backgroundColor: colors.brandStrong,
     borderRadius: 24,
     paddingVertical: 14,
     alignItems: 'center',
@@ -223,17 +232,17 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 14,
-    color: '#757d8a',
+    color: colors.muted,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#d7deec',
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: '#f7f8fb',
+    backgroundColor: colors.input,
   },
   inputIcon: {
     marginRight: 8,
@@ -248,7 +257,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#222222',
+    color: colors.text,
   },
   wave: {
     position: 'absolute',
@@ -258,92 +267,42 @@ const styles = StyleSheet.create({
     width: '100%',
     overflow: 'hidden',
   },
-  cardRow: {
+  screenHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    justifyContent: 'space-between',
+  },
+  screenHeaderTitle: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-    marginBottom: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
   cardCode: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
   },
   cardName: {
     fontSize: 13,
-    color: '#6b7280',
+    color: colors.muted,
     marginTop: 2,
   },
-  cardAction: {
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#0053A9',
-  },
-  cardActionText: {
-    color: '#ffffff',
+  listActionText: {
+    marginLeft: 12,
     fontSize: 13,
     fontWeight: '600',
+    color: colors.brand,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
+    color: colors.muted,
     marginBottom: 8,
   },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    justifyContent: 'flex-end',
-  },
-  modalSheet: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 16,
-    gap: 12,
-  },
-  modalSecondary: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  modalSecondaryText: {
-    fontSize: 14,
-    color: '#4b5563',
-  },
-  modalPrimary: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: '#0053A9',
-  },
-  modalPrimaryText: {
-    fontSize: 14,
-    color: '#ffffff',
-    fontWeight: '600',
-  },
 });
-

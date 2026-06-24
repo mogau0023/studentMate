@@ -1,5 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
+import { useFonts } from 'expo-font';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,37 +9,32 @@ import RegisterScreen from './screens/RegisterScreen';
 import LoginScreen from './screens/LoginScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import MainTabs from './screens/MainTabs';
-import mobileAds from 'react-native-google-mobile-ads';
 import { StatusBar } from 'expo-status-bar';
-import { SubscriptionProvider } from "./providers/SubscriptionProvider";
-import PaywallScreen from './screens/PaywallScreen';
+import { isWebDark, navigationTheme, colors } from './utils/webTheme';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppRoutes() {
-  useEffect(() => {
-    mobileAds()
-      .initialize()
-      .then(adapterStatuses => {
-        // Initialization complete!
-      });
-  }, []);
+  const [fontsLoaded, fontError] = useFonts({
+    Feather: require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf'),
+    MaterialCommunityIcons: require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf'),
+  });
+
+  // Don't render until fonts are ready (or failed — still render to avoid blank screen)
+  if (!fontsLoaded && !fontError) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="dark" translucent backgroundColor="transparent" />
-      <SubscriptionProvider>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Splash" component={SplashScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-            <Stack.Screen name="MainTabs" component={MainTabs} />
-            <Stack.Screen name="Paywall" component={PaywallScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </SubscriptionProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={isWebDark ? 'light' : 'dark'} translucent backgroundColor="transparent" />
+      <NavigationContainer theme={navigationTheme}>
+        <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Splash" component={SplashScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+        </Stack.Navigator>
+      </NavigationContainer>
     </GestureHandlerRootView>
   );
 }

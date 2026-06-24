@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
 import { auth, db } from "../firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { ScreenHeader } from "../components/UI";
+import { colors } from "../utils/webTheme";
 
 export default function ReportProblemScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -39,13 +40,16 @@ export default function ReportProblemScreen({ navigation }) {
 
   return (
     <SafeAreaView style={[styles.safe, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="chevron-left" size={26} color="#111" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Report a problem</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader
+        title="Report a problem"
+        onBack={() => navigation.goBack()}
+        leftIconName="chevron-left"
+        iconColor={colors.text}
+        containerStyle={styles.header}
+        titleStyle={styles.title}
+        buttonStyle={styles.backBtn}
+        rightPlaceholderWidth={40}
+      />
 
       <View style={styles.content}>
         <Text style={styles.label}>Subject</Text>
@@ -74,14 +78,14 @@ export default function ReportProblemScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#eee" },
+  safe: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
   backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-  title: { flex: 1, textAlign: "center", fontSize: 18, fontWeight: "900", color: "#111" },
+  title: { flex: 1, textAlign: "center", fontSize: 18, fontWeight: "900", color: colors.text },
   content: { padding: 16, gap: 10 },
-  label: { fontWeight: "800", color: "#0f172a" },
-  input: { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, backgroundColor: "#fff" },
+  label: { fontWeight: "800", color: colors.textSoft },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, backgroundColor: colors.input, color: colors.text },
   textArea: { height: 140, textAlignVertical: "top" },
-  btn: { marginTop: 8, height: 52, borderRadius: 16, backgroundColor: "#0053A9", alignItems: "center", justifyContent: "center" },
+  btn: { marginTop: 8, height: 52, borderRadius: 16, backgroundColor: colors.brandStrong, alignItems: "center", justifyContent: "center" },
   btnText: { color: "#fff", fontWeight: "900", fontSize: 16 },
 });

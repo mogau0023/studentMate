@@ -1,10 +1,9 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
-import { TestIds } from 'react-native-google-mobile-ads';
 
 function getExtra() {
   const cfg = Constants?.expoConfig || Constants?.manifest || {};
-  return (cfg.extra || {});
+  return cfg.extra || {};
 }
 
 export function adsEnabled() {
@@ -12,23 +11,25 @@ export function adsEnabled() {
   if (typeof extra.adsDisabled === 'boolean') {
     return !extra.adsDisabled;
   }
-  return true;
+  return false; // 👈 disable ads for now on web
 }
 
 export function bannerUnitId() {
-  if (__DEV__) return TestIds.BANNER;
+  if (Platform.OS === 'web') return null;
+
   const extra = getExtra();
   const iosId = extra.iosBannerUnitId;
   const androidId = extra.androidBannerUnitId;
-  if (Platform.OS === 'ios') return iosId || TestIds.BANNER;
-  return androidId || TestIds.BANNER;
+
+  return Platform.OS === 'ios' ? iosId : androidId;
 }
 
-export function rewardedUnitId() {
-  if (__DEV__) return TestIds.REWARDED;
+export function interstitialUnitId() {
+  if (Platform.OS === 'web') return null;
+
   const extra = getExtra();
-  const iosId = extra.iosRewardedUnitId;
-  const androidId = extra.androidRewardedUnitId;
-  if (Platform.OS === 'ios') return iosId || TestIds.REWARDED;
-  return androidId || TestIds.REWARDED;
+  const iosId = extra.iosInterstitialUnitId;
+  const androidId = extra.androidInterstitialUnitId;
+
+  return Platform.OS === 'ios' ? iosId : androidId;
 }

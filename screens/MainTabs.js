@@ -3,16 +3,15 @@ import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom
 import { SafeAreaView, View, Text } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import HomeStack from './HomeStack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+//import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { bannerUnitId, adsEnabled } from '../utils/ads';
-import { useSubscription } from "../providers/SubscriptionProvider";
+import { colors, isWebDark } from '../utils/webTheme';
 
 function Placeholder() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Text>Coming soon</Text>
+        <Text style={{ color: colors.text }}>Coming soon</Text>
       </View>
     </SafeAreaView>
   );
@@ -22,7 +21,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ProfileScreen from './ProfileScreen';
 import UploadScreen from './UploadScreen';
 import EditProfileScreen from './EditProfileScreen';
-import PaywallScreen from "./PaywallScreen";
 import TermsScreen from "./TermsScreen";
 import PrivacyScreen from "./PrivacyScreen";
 import ReportProblemScreen from "./ReportProblemScreen";
@@ -34,7 +32,6 @@ function ProfileStackScreen() {
     <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
       <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
-      <ProfileStack.Screen name="Paywall" component={PaywallScreen} />
       <ProfileStack.Screen name="Terms" component={TermsScreen} />
       <ProfileStack.Screen name="Privacy" component={PrivacyScreen} />
       <ProfileStack.Screen name="ReportProblem" component={ReportProblemScreen} />
@@ -43,21 +40,17 @@ function ProfileStackScreen() {
 }
 
 function TabBarWithBanner(props) {
-  const { isPro } = useSubscription();
-  const insets = useSafeAreaInsets();
   const BANNER_UNIT_ID = bannerUnitId();
   return (
     <View>
       {adsEnabled() ? (
-        <View style={{ alignItems: 'center', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
-          {!isPro ? (
-            <BannerAd
-              unitId={BANNER_UNIT_ID}
-              size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-              onAdLoaded={() => console.log('Global banner loaded')}
-              onAdFailedToLoad={(e) => console.log('Global banner failed', e)}
-            />
-          ) : null}
+        <View style={{ alignItems: 'center', backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border }}>
+          <BannerAd
+            unitId={BANNER_UNIT_ID}
+            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+            onAdLoaded={() => console.log('Global banner loaded')}
+            onAdFailedToLoad={(e) => console.log('Global banner failed', e)}
+          />
         </View>
       ) : null}
       <BottomTabBar {...props} />
@@ -71,7 +64,13 @@ export default function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarStyle: { height: 64, paddingBottom: 10, paddingTop: 8 },
+        tabBarStyle: {
+          height: 64,
+          paddingBottom: 10,
+          paddingTop: 8,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+        },
       }}
       tabBar={(p) => <TabBarWithBanner {...p} />}
     >
@@ -80,7 +79,7 @@ export default function MainTabs() {
         component={HomeStack}
         options={{
           tabBarIcon: ({ focused }) => (
-            <Feather name="home" size={22} color={focused ? '#0053A9' : '#7a7f87'} />
+            <Feather name="home" size={22} color={focused ? colors.brand : colors.muted} />
           ),
         }}
       />
@@ -89,7 +88,7 @@ export default function MainTabs() {
         component={UploadScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <Feather name="upload" size={22} color={focused ? '#0053A9' : '#7a7f87'} />
+            <Feather name="upload" size={22} color={focused ? colors.brand : colors.muted} />
           ),
         }}
       />
@@ -98,7 +97,7 @@ export default function MainTabs() {
         component={ProfileStackScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <Feather name="user" size={22} color={focused ? '#0053A9' : '#7a7f87'} />
+            <Feather name="user" size={22} color={focused ? colors.brand : colors.muted} />
           ),
         }}
       />

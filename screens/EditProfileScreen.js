@@ -5,6 +5,8 @@ import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
+import { ScreenHeader } from '../components/UI';
+import { colors } from '../utils/webTheme';
 
 export default function EditProfileScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -36,13 +38,15 @@ export default function EditProfileScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-          <Feather name="arrow-left" size={24} color="#111827" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader
+        title="Edit Profile"
+        onBack={() => navigation.goBack()}
+        iconColor={colors.text}
+        containerStyle={styles.header}
+        titleStyle={styles.headerTitle}
+        buttonStyle={styles.headerButton}
+        rightPlaceholderWidth={40}
+      />
 
       <View style={styles.content}>
         <View style={styles.inputGroup}>
@@ -52,7 +56,7 @@ export default function EditProfileScreen({ navigation, route }) {
             value={name}
             onChangeText={setName}
             placeholder="Enter your name"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.muted}
           />
         </View>
 
@@ -78,7 +82,7 @@ export default function EditProfileScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
+  safeArea: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -86,32 +90,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
   },
   headerButton: { padding: 8 },
-  headerTitle: { fontSize: 18, fontWeight: '600', color: '#111827' },
+  headerTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
   content: { padding: 24 },
   inputGroup: { marginBottom: 24 },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  label: { fontSize: 14, fontWeight: '600', color: colors.textSoft, marginBottom: 8 },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
+    backgroundColor: colors.input,
   },
   disabledInput: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderColor: '#e5e7eb',
+    borderColor: colors.borderSoft,
   },
-  helperText: { fontSize: 12, color: '#6b7280', marginTop: 6 },
+  helperText: { fontSize: 12, color: colors.muted, marginTop: 6 },
   saveButton: {
-    backgroundColor: '#0053A9',
+    backgroundColor: colors.brandStrong,
     height: 50,
     borderRadius: 12,
     alignItems: 'center',
