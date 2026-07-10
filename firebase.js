@@ -10,7 +10,7 @@ const firebaseConfig = {
   storageBucket: 'studomate1.firebasestorage.app',
   messagingSenderId: '819063499606',
   appId: '1:819063499606:web:79b8457a7333050e0404f7',
-  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
+  measurementId: "G-7N7XYXYQMS" // Replace with your actual Measurement ID from Firebase Console
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
