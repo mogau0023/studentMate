@@ -10,6 +10,7 @@ const firebaseConfig = {
   storageBucket: 'studomate1.firebasestorage.app',
   messagingSenderId: '819063499606',
   appId: '1:819063499606:web:79b8457a7333050e0404f7',
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -26,4 +27,5 @@ try {
 
 export const auth = authInstance;
 export const db = getFirestore(app);
+export { app };
 

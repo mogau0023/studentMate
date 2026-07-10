@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { collection, onSnapshot, orderBy, query, addDoc, serverTimestamp, where,
 import { getCachedUser } from '../utils/storage';
 import { ScreenHeader } from '../components/UI';
 import { colors } from '../utils/webTheme';
+import { trackError, trackEvent } from '../utils/analytics';
 
 export default function AddModulesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -16,6 +17,7 @@ export default function AddModulesScreen({ navigation }) {
   const [myModules, setMyModules] = useState([]);
   const [uniId, setUniId] = useState(null);
   const [userId, setUserId] = useState(auth.currentUser?.uid || null);
+  const lastLoggedSearchRef = useRef('');
 
   useEffect(() => {
     // Try cached user first for cold start
@@ -78,6 +80,24 @@ export default function AddModulesScreen({ navigation }) {
     );
   }, [search, catalog]);
 
+  useEffect(() => {
+    const q = search.trim();
+    if (!q) {
+      lastLoggedSearchRef.current = '';
+      return;
+    }
+    const handle = setTimeout(() => {
+      if (lastLoggedSearchRef.current === q) return;
+      lastLoggedSearchRef.current = q;
+      trackEvent('module_search', {
+        query_len: q.length,
+        results_count: filtered.length,
+        failed: filtered.length === 0,
+      });
+    }, 600);
+    return () => clearTimeout(handle);
+  }, [search, filtered.length]);
+
   const norm = (s) => String(s || '').toUpperCase();
   const isAdded = (code) => myModules.some((m) => norm(m.code) === norm(code));
 
@@ -94,7 +114,12 @@ export default function AddModulesScreen({ navigation }) {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      trackEvent('module_add', {
+        module_code: norm(mod.code),
+        module_id: String(mod.id || ''),
+      });
     } catch (e) {
+      trackError(e, 'add_module');
       Alert.alert('Cannot add module', e.message ?? 'Permission or network error');
     }
   };

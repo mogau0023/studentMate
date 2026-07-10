@@ -9,6 +9,7 @@ import { collection, limit, onSnapshot, orderBy, query, deleteDoc, doc } from 'f
 import { Feather } from '@expo/vector-icons';
 import { getCachedUser } from '../utils/storage';
 import { colors, cardShadow, isWebDark } from '../utils/webTheme';
+import { trackError, trackEvent } from '../utils/analytics';
 
 export default function ModulesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -80,10 +81,16 @@ export default function ModulesScreen({ navigation }) {
 
   const deleteModule = async (moduleId) => {
     if (!userId) return;
-    await deleteDoc(doc(db, 'users', userId, 'modules', moduleId));
+    try {
+      await deleteDoc(doc(db, 'users', userId, 'modules', moduleId));
+      trackEvent('module_remove', { module_id: String(moduleId || '') });
+    } catch (e) {
+      trackError(e, 'remove_module');
+    }
   };
 
   const openModule = (code, name, id) => {
+    trackEvent('module_open', { module_code: String(code || ''), module_id: String(id || '') });
     navigation.navigate('ModuleDashboard', { moduleCode: code, moduleName: name, moduleId: id });
   };
 

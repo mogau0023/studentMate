@@ -7,6 +7,7 @@ import { ScreenHeader } from '../components/UI';
 //import { InterstitialAd, AdEventType } from 'react-native-google-mobile-ads';
 import { adsEnabled, interstitialUnitId } from '../utils/ads';
 import { colors } from '../utils/webTheme';
+import { trackError, trackEvent } from '../utils/analytics';
 
 export default function AssessmentListScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -61,6 +62,7 @@ export default function AssessmentListScreen({ navigation, route }) {
 
   const fetchAssessments = async () => {
     try {
+      trackEvent('assessment_list_open', { module_id: String(moduleId || ''), type: String(type || '') });
       const q = query(
         collection(db, 'assessments'),
         where('moduleId', '==', moduleId),
@@ -77,12 +79,18 @@ export default function AssessmentListScreen({ navigation, route }) {
       setAssessments(data);
     } catch (error) {
       console.error("Error fetching assessments:", error);
+      trackError(error, 'fetch_assessments');
     } finally {
       setLoading(false);
     }
   };
 
   const openAssessment = (assessment) => {
+    trackEvent('assessment_open', {
+      assessment_id: String(assessment?.id || ''),
+      module_id: String(moduleId || ''),
+      type: String(type || ''),
+    });
     if (!adsEnabled() || !interstitialLoadedRef.current) {
       navigation.navigate('AssessmentViewer', { assessment });
       try {

@@ -7,6 +7,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { saveUserToCache } from '../utils/storage';
 import { colors, cardShadow } from '../utils/webTheme';
+import { identifyUser, trackEvent } from '../utils/analytics';
 
 const LARGE_SCREEN_BREAKPOINT = 600;
 
@@ -33,13 +34,20 @@ export default function LoginScreen({ navigation }) {
         const snap = await getDoc(doc(db, 'users', u.uid));
         profile = snap.exists() ? snap.data() : null;
       } catch {}
-      await saveUserToCache({
+      const cached = {
         uid: u.uid,
         email: u.email,
         name: profile?.name || u.displayName || '',
         universityId: profile?.universityId || '',
         universityName: profile?.universityName || profile?.university || '',
+      };
+      await saveUserToCache(cached);
+      await identifyUser({
+        uid: cached.uid,
+        universityId: cached.universityId,
+        universityName: cached.universityName,
       });
+      await trackEvent('login', { method: 'password' });
       navigation.reset({
         index: 0,
         routes: [{ name: 'MainTabs' }],

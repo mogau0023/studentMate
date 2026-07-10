@@ -9,7 +9,8 @@ import { db } from '../firebase';
 import * as ScreenCapture from 'expo-screen-capture';
 import { adsEnabled, interstitialUnitId } from '../utils/ads';
 import { ScreenHeader } from '../components/UI';
-import { colors, cardShadow } from '../utils/webTheme';
+import { colors, cardShadow, isWebDark } from '../utils/webTheme';
+import { trackError, trackEvent } from '../utils/analytics';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -44,7 +45,56 @@ function getDisplayTitle(question, number) {
   return raw.replace(r, '').trim();
 }
 
-function QuestionCard({ question, number }) {
+function FirebaseImage({ uri, aspectRatio, style, onPress }) {
+  const [loadingImage, setLoadingImage] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setLoadingImage(!!uri);
+    setHasError(false);
+  }, [uri]);
+
+  if (!uri) return null;
+
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.9} disabled={!onPress} style={styles.imageTouch}>
+      <View style={[styles.imageFrame, isWebDark && styles.imageFrameDark]}>
+        <Image
+          source={{ uri }}
+          style={[
+            style,
+            aspectRatio ? { aspectRatio } : { height: 200 },
+            isWebDark && styles.imageDarkMode,
+          ]}
+          resizeMode="contain"
+          onLoadStart={() => {
+            setLoadingImage(true);
+            setHasError(false);
+          }}
+          onLoadEnd={() => setLoadingImage(false)}
+          onError={() => {
+            setLoadingImage(false);
+            setHasError(true);
+          }}
+        />
+
+        {loadingImage ? (
+          <View style={styles.imageLoaderOverlay}>
+            <ActivityIndicator size="small" color={colors.brand} />
+          </View>
+        ) : null}
+
+        {hasError ? (
+          <View style={styles.imageLoaderOverlay}>
+            <Text style={styles.imageErrorText}>Failed to load image.</Text>
+          </View>
+        ) : null}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function QuestionCard({ question, number, assessmentId, moduleId, assessmentType }) {
   const [expanded, setExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
@@ -60,6 +110,13 @@ function QuestionCard({ question, number }) {
       return;
     }
 
+    trackEvent('answer_reveal', {
+      assessment_id: String(assessmentId || ''),
+      module_id: String(moduleId || ''),
+      type: String(assessmentType || ''),
+      question_order: question?.order || number,
+    });
+
     try {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setExpanded(true);
@@ -71,6 +128,12 @@ function QuestionCard({ question, number }) {
 
   const openVideo = () => {
     if (question.videoUrl) {
+      trackEvent('video_solution_open', {
+        assessment_id: String(assessmentId || ''),
+        module_id: String(moduleId || ''),
+        type: String(assessmentType || ''),
+        question_order: question?.order || number,
+      });
       Linking.openURL(question.videoUrl);
     } else {
       Alert.alert('No Video', 'Video solution is not available for this question.');
@@ -98,16 +161,12 @@ function QuestionCard({ question, number }) {
         {title ? <Text style={styles.questionText}>{title}</Text> : null}
 
         {question.contentUrl && (
-          <TouchableOpacity onPress={() => showImage(question.contentUrl)}>
-            <Image
-              source={{ uri: question.contentUrl }}
-              style={[
-                styles.contentImage,
-                contentAspectRatio ? { aspectRatio: contentAspectRatio } : { height: 200 }
-              ]}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
+          <FirebaseImage
+            uri={question.contentUrl}
+            aspectRatio={contentAspectRatio}
+            style={styles.contentImage}
+            onPress={() => showImage(question.contentUrl)}
+          />
         )}
       </View>
 
@@ -130,16 +189,12 @@ function QuestionCard({ question, number }) {
         <View style={styles.answerSection}>
           <Text style={styles.answerLabel}>Answer:</Text>
           {question.answerUrl ? (
-            <TouchableOpacity onPress={() => showImage(question.answerUrl)}>
-              <Image
-                source={{ uri: question.answerUrl }}
-                style={[
-                  styles.answerImage,
-                  answerAspectRatio ? { aspectRatio: answerAspectRatio } : { height: 200 }
-                ]}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+            <FirebaseImage
+              uri={question.answerUrl}
+              aspectRatio={answerAspectRatio}
+              style={styles.answerImage}
+              onPress={() => showImage(question.answerUrl)}
+            />
           ) : (
             <Text style={styles.answerText}>No answer image available.</Text>
           )}
@@ -166,6 +221,7 @@ export default function AssessmentViewerScreen({ navigation, route }) {
   const { assessment } = route.params;
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const viewStartRef = useRef(Date.now());
 
   const interstitialRef = useRef(null);
   const interstitialLoadedRef = useRef(false);
@@ -269,6 +325,7 @@ export default function AssessmentViewerScreen({ navigation, route }) {
       setQuestions(data);
     } catch (error) {
       console.error("Error fetching questions:", error);
+      trackError(error, 'fetch_questions');
       if (assessment.questions && Array.isArray(assessment.questions)) {
         setQuestions(assessment.questions);
       }
@@ -278,7 +335,22 @@ export default function AssessmentViewerScreen({ navigation, route }) {
   };
 
   useEffect(() => {
+    viewStartRef.current = Date.now();
+    trackEvent('assessment_view', {
+      assessment_id: String(assessment?.id || ''),
+      module_id: String(assessment?.moduleId || ''),
+      type: String(assessment?.type || ''),
+    });
     fetchQuestions();
+    return () => {
+      const durationMs = Date.now() - (viewStartRef.current || Date.now());
+      trackEvent('assessment_view_time', {
+        assessment_id: String(assessment?.id || ''),
+        module_id: String(assessment?.moduleId || ''),
+        type: String(assessment?.type || ''),
+        duration_ms: durationMs,
+      });
+    };
   }, []);
 
   return (
@@ -301,7 +373,14 @@ export default function AssessmentViewerScreen({ navigation, route }) {
         <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 20 }]}>
           {questions.length > 0 ? (
             questions.map((q, index) => (
-              <QuestionCard key={q.id || index} question={q} number={index + 1} />
+              <QuestionCard
+                key={q.id || index}
+                question={q}
+                number={index + 1}
+                assessmentId={assessment?.id}
+                moduleId={assessment?.moduleId}
+                assessmentType={assessment?.type}
+              />
             ))
           ) : (
             <View style={styles.center}>
@@ -439,17 +518,44 @@ const styles = StyleSheet.create({
     color: colors.textSoft,
     lineHeight: 20,
   },
-  contentImage: {
-    width: '100%',
+  imageTouch: {
     marginTop: 12,
+  },
+  imageFrame: {
+    position: 'relative',
     backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
+    overflow: 'hidden',
+    minHeight: 200,
+    justifyContent: 'center',
+  },
+  imageFrameDark: {
+    backgroundColor: '#0a0f1a',
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+  },
+  imageLoaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+  },
+  imageErrorText: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  imageDarkMode: Platform.select({
+    web: {
+      filter: 'invert(1) hue-rotate(180deg) contrast(0.92) brightness(0.9)',
+    },
+    default: null,
+  }),
+  contentImage: {
+    width: '100%',
   },
   answerImage: {
     width: '100%',
-    marginTop: 12,
-    backgroundColor: colors.successSurface,
-    borderRadius: 8,
   },
   center: {
     flex: 1,

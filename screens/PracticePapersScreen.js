@@ -7,6 +7,7 @@ import { ScreenHeader } from '../components/UI';
 //import { InterstitialAd, AdEventType } from 'react-native-google-mobile-ads';
 import { adsEnabled, interstitialUnitId } from '../utils/ads';
 import { colors } from '../utils/webTheme';
+import { trackError, trackEvent } from '../utils/analytics';
 
 export default function PracticePapersScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -56,6 +57,11 @@ export default function PracticePapersScreen({ navigation, route }) {
   }, [navigation]);
 
   useEffect(() => {
+    trackEvent('practice_papers_open', {
+      module_id: String(moduleId || ''),
+      module_code: String(moduleCode || ''),
+      topic: String(topic || ''),
+    });
     fetchPapers();
   }, []);
 
@@ -78,12 +84,19 @@ export default function PracticePapersScreen({ navigation, route }) {
       setPapers(papersData);
     } catch (error) {
       console.error("Error fetching papers:", error);
+      trackError(error, 'fetch_practice_papers');
     } finally {
       setLoading(false);
     }
   };
 
   const openAssessment = (assessment) => {
+    trackEvent('assessment_open', {
+      assessment_id: String(assessment?.id || ''),
+      module_id: String(moduleId || ''),
+      type: 'practice',
+      topic: String(topic || ''),
+    });
     if (!adsEnabled() || !interstitialLoadedRef.current) {
       navigation.navigate('AssessmentViewer', { assessment });
       try {

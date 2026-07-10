@@ -7,6 +7,7 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { saveUserToCache } from '../utils/storage';
 import { colors, cardShadow } from '../utils/webTheme';
+import { identifyUser, trackEvent } from '../utils/analytics';
 
 const LARGE_SCREEN_BREAKPOINT = 600;
 
@@ -74,6 +75,12 @@ export default function RegisterScreen({ navigation }) {
         universityId: selectedUniversity?.id || '',
         universityName: selectedUniversity?.name || '',
       });
+      await identifyUser({
+        uid: userCredential.user.uid,
+        universityId: selectedUniversity?.id || '',
+        universityName: selectedUniversity?.name || '',
+      });
+      await trackEvent('sign_up', { method: 'password' });
       navigation.reset({
         index: 0,
         routes: [{ name: 'MainTabs' }],

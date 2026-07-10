@@ -5,6 +5,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ScreenHeader } from '../components/UI';
 import { colors } from '../utils/webTheme';
+import { trackError, trackEvent } from '../utils/analytics';
 
 export default function PracticeTopicsScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -13,6 +14,7 @@ export default function PracticeTopicsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    trackEvent('practice_topics_open', { module_id: String(moduleId || ''), module_code: String(moduleCode || '') });
     fetchTopics();
   }, []);
 
@@ -37,6 +39,7 @@ export default function PracticeTopicsScreen({ navigation, route }) {
       setTopics(Array.from(uniqueTopics).sort());
     } catch (error) {
       console.error("Error fetching topics:", error);
+      trackError(error, 'fetch_practice_topics');
     } finally {
       setLoading(false);
     }
@@ -45,7 +48,10 @@ export default function PracticeTopicsScreen({ navigation, route }) {
   const renderItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.row}
-      onPress={() => navigation.navigate('PracticePapers', { moduleId, moduleCode, topic: item })}
+      onPress={() => {
+        trackEvent('practice_topic_open', { module_id: String(moduleId || ''), topic: String(item || '') });
+        navigation.navigate('PracticePapers', { moduleId, moduleCode, topic: item });
+      }}
       activeOpacity={0.7}
     >
       <Text style={styles.rowTitle}>{item}</Text>

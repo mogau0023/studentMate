@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenHeader } from '../components/UI';
 import { colors, cardShadow } from '../utils/webTheme';
+import { trackEvent } from '../utils/analytics';
 
 const { width } = Dimensions.get('window');
 const CARD_GAP = 16;
@@ -45,25 +46,37 @@ export default function ModuleDashboardScreen({ navigation, route }) {
             title="Practice Problems"
             icon="file-document-outline"
             color="#F59E0B" // Orange/Yellow
-            onPress={() => navigation.navigate('PracticeTopics', { moduleId: moduleCode, moduleCode })}
+            onPress={() => {
+              trackEvent('feature_open', { feature: 'practice_problems', module_code: String(moduleCode || '') });
+              navigation.navigate('PracticeTopics', { moduleId: moduleCode, moduleCode });
+            }}
           />
           <DashboardCard
             title="Tests"
             icon="clipboard-text-outline"
             color="#8B5CF6" // Purple
-            onPress={() => navigation.navigate('AssessmentList', { moduleId: moduleCode, type: 'test', title: 'Tests' })}
+            onPress={() => {
+              trackEvent('feature_open', { feature: 'tests', module_code: String(moduleCode || '') });
+              navigation.navigate('AssessmentList', { moduleId: moduleCode, type: 'test', title: 'Tests' });
+            }}
           />
           <DashboardCard
             title="Exams"
             icon="school-outline"
             color="#EC4899" // Pink
-            onPress={() => navigation.navigate('AssessmentList', { moduleId: moduleCode, type: 'exam', title: 'Exams' })}
+            onPress={() => {
+              trackEvent('feature_open', { feature: 'exams', module_code: String(moduleCode || '') });
+              navigation.navigate('AssessmentList', { moduleId: moduleCode, type: 'exam', title: 'Exams' });
+            }}
           />
           <DashboardCard
             title="Supplementary Exams"
             icon="file-document-edit-outline"
             color="#06B6D4" // Cyan
-            onPress={() => navigation.navigate('AssessmentList', { moduleId: moduleCode, type: 'supplementary', title: 'Supplementary Exams' })}
+            onPress={() => {
+              trackEvent('feature_open', { feature: 'supplementary_exams', module_code: String(moduleCode || '') });
+              navigation.navigate('AssessmentList', { moduleId: moduleCode, type: 'supplementary', title: 'Supplementary Exams' });
+            }}
           />
         </View>
       </ScrollView>
