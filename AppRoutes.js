@@ -13,6 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { isWebDark, navigationTheme, colors } from './utils/webTheme';
 import { getCachedUser } from './utils/storage';
 import { identifyUser, installGlobalErrorHandlers, trackScreen } from './utils/analytics';
+import { app } from './firebase';
 
 const Stack = createNativeStackNavigator();
 
@@ -26,6 +27,7 @@ export default function AppRoutes() {
   const routeNameRef = useRef(null);
 
   useEffect(() => {
+    console.log('[AppRoutes] app.options:', app.options);
     installGlobalErrorHandlers();
     (async () => {
       const cached = await getCachedUser();

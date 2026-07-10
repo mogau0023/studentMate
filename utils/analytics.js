@@ -1,11 +1,11 @@
 import { Platform } from 'react-native';
 import { app } from '../firebase';
+import { getAnalytics, isSupported, logEvent, setUserId, setUserProperties } from 'firebase/analytics';
 
 let enabled = true;
 let nativeAnalytics;
 let webAnalytics;
 let webInitPromise;
-let webModulePromise;
 let errorHandlersInstalled = false;
 
 function trimString(v, max) {
@@ -47,27 +47,36 @@ function getNativeAnalytics() {
   }
 }
 
-async function getWebModule() {
-  if (Platform.OS !== 'web') return null;
-  if (!webModulePromise) {
-    webModulePromise = import('firebase/analytics').catch(() => null);
-  }
-  return webModulePromise;
-}
-
 async function getWebAnalytics() {
+  console.log('[Analytics] getWebAnalytics called, Platform:', Platform.OS);
+  console.log('[Analytics] app.options:', app?.options);
   if (Platform.OS !== 'web') return null;
-  if (!app?.options?.measurementId) return null;
-  if (webAnalytics) return webAnalytics;
+  if (!app?.options?.measurementId) {
+    console.log('[Analytics] No measurementId found!');
+    return null;
+  }
+  if (webAnalytics) {
+    console.log('[Analytics] Returning existing webAnalytics');
+    return webAnalytics;
+  }
   if (!webInitPromise) {
     webInitPromise = (async () => {
-      const mod = await getWebModule();
-      if (!mod?.isSupported || !mod?.getAnalytics) return null;
-      const ok = await mod.isSupported().catch(() => false);
-      if (!ok) return null;
-      webAnalytics = mod.getAnalytics(app);
-      return webAnalytics;
-    })().catch(() => null);
+      console.log('[Analytics] Initializing web analytics...');
+      try {
+        const supported = await isSupported();
+        console.log('[Analytics] isSupported:', supported);
+        if (!supported) {
+          console.log('[Analytics] Analytics not supported in this environment');
+          return null;
+        }
+        webAnalytics = getAnalytics(app);
+        console.log('[Analytics] Web analytics initialized:', webAnalytics);
+        return webAnalytics;
+      } catch (e) {
+        console.error('[Analytics] Error initializing web analytics:', e);
+        return null;
+      }
+    })();
   }
   return webInitPromise;
 }
@@ -77,24 +86,39 @@ export function setAnalyticsEnabled(v) {
 }
 
 export async function trackEvent(name, params) {
-  if (!enabled || !name) return;
+  console.log('[Analytics] trackEvent called with name:', name, 'params:', params);
+  if (!enabled || !name) {
+    console.log('[Analytics] trackEvent skipped, enabled:', enabled, 'name:', name);
+    return;
+  }
   const safeParams = sanitizeParams(params);
+  console.log('[Analytics] safeParams:', safeParams);
 
   const native = getNativeAnalytics();
   if (native?.logEvent) {
     try {
+      console.log('[Analytics] Using native analytics');
       await native.logEvent(name, safeParams);
-    } catch {}
+      console.log('[Analytics] Native event logged');
+    } catch (e) {
+      console.error('[Analytics] Native logEvent error:', e);
+    }
     return;
   }
 
+  console.log('[Analytics] Using web analytics');
   const web = await getWebAnalytics();
-  if (!web) return;
-  const mod = await getWebModule();
-  if (!mod?.logEvent) return;
+  if (!web) {
+    console.log('[Analytics] No web analytics available');
+    return;
+  }
   try {
-    await mod.logEvent(web, name, safeParams);
-  } catch {}
+    console.log('[Analytics] Calling web logEvent');
+    logEvent(web, name, safeParams);
+    console.log('[Analytics] Web event logged');
+  } catch (e) {
+    console.error('[Analytics] Web logEvent error:', e);
+  }
 }
 
 export async function trackScreen(screenName, params) {
@@ -138,21 +162,19 @@ export async function identifyUser({ uid, universityId, universityName } = {}) {
 
   const web = await getWebAnalytics();
   if (!web) return;
-  const mod = await getWebModule();
-  if (!mod) return;
 
-  if (mod.setUserId) {
-    try {
-      await mod.setUserId(web, userId);
-    } catch {}
-  }
-  if (mod.setUserProperties) {
-    try {
-      const props = {};
-      if (uniId) props.university_id = uniId;
-      if (uniName) props.university_name = uniName;
-      await mod.setUserProperties(web, props);
-    } catch {}
+  try {
+    if (userId) {
+      setUserId(web, userId);
+    }
+    const props = {};
+    if (uniId) props.university_id = uniId;
+    if (uniName) props.university_name = uniName;
+    if (Object.keys(props).length > 0) {
+      setUserProperties(web, props);
+    }
+  } catch (e) {
+    console.error('[Analytics] identifyUser error:', e);
   }
 }
 
